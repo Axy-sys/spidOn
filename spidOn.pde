@@ -1,5 +1,7 @@
 Game game;
 SoundManager soundManager;
+PFont monoFont;
+PFont arcadeFont;
 
 // Global Accessibility Settings
 boolean colorblindMode = false;
@@ -11,6 +13,12 @@ void setup() {
   smooth(8);
   frameRate(60);
   soundManager = new SoundManager();
+  
+  // Load custom premium fonts
+  monoFont = createFont("ShareTechMono.ttf", 32);
+  arcadeFont = createFont("PressStart2P.ttf", 32);
+  textFont(monoFont);
+  
   game = new Game();
 }
 

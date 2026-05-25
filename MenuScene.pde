@@ -163,9 +163,11 @@ class MenuScene extends Scene {
     // Title Text
     fill(255);
     textAlign(CENTER, CENTER);
-    textSize(80);
+    textFont(arcadeFont);
+    textSize(54);
     text("spidOn", width/2, 140);
 
+    textFont(monoFont);
     textSize(20);
     fill(colorblindMode ? color(253, 184, 99) : color(0, 255, 255));
     text("CAMPAÑA CONTRA EL CIBERACOSO", width/2, 215);
