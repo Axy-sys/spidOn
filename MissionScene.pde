@@ -200,10 +200,10 @@ class MissionScene extends Scene {
   void setupMissionNarrative() {
     if (missionID == 1) {
       dialogueSystem.eva("¡Hola! Soy EVA, tu asistente de análisis de redes sociales.");
-      dialogueSystem.eva("Alicia ha recibido mensajes ofensivos y necesitamos tu ayuda.");
-      dialogueSystem.eva("Haz clic en cualquier usuario de la red para empezar a rastrear cómo se propaga el acoso.");
-      dialogueSystem.eva("Tu objetivo: encontrar quién es 'Ghost', la cuenta agresora. ¡Los nodos que brillan te indican dónde hacer clic!");
-      triggerAlert("PROPAGACIÓN DETECTADA");
+      dialogueSystem.eva("Alicia ha recibido mensajes ofensivos y necesitamos encontrar el origen.");
+      dialogueSystem.eva("Inicia el rastreo haciendo clic izquierdo en Alicia, la víctima.");
+      dialogueSystem.eva("Luego, sigue el orden del algoritmo (ver Cola/Pila a la derecha) para revelar la red y encontrar a 'Ghost', la cuenta agresora.");
+      triggerAlert("RASTREAR ORIGEN");
     } else if (missionID == 2) {
       dialogueSystem.eva("¡Buenas noticias! Ya identificamos al agresor.");
       dialogueSystem.eva("Ahora Alicia necesita apoyo urgente, pero debemos encontrar la ruta con menor riesgo.");
@@ -437,32 +437,17 @@ class MissionScene extends Scene {
     // MISSION SPECIFIC COMPLETION AND FLOW LOGIC
     // ==========================================
 
-    // --- MISSION 1: Tracing & Containment ---
+    // --- MISSION 1: Tracing Only ---
     if (missionID == 1) {
-      if (!sourceFound && missionPhase == 1) {
+      if (!sourceFound) {
         Node ghost = getNode("Ghost");
         if (ghost != null && ghost.visited) {
           sourceFound = true;
-          startPhaseTransition();
+          missionComplete = true;
+          dialogueSystem.eva("¡Excelente! Has rastreado los mensajes de acoso y descubierto el origen: 'Ghost' es la cuenta agresora.");
+          dialogueSystem.eva("¡Misión 1 completada con éxito! Has identificado al culpable.");
         }
       }
-
-      if (missionPhase == 2 && !missionComplete && !missionFailed) {
-        if (!dialogueSystem.isDialogueActive()) {
-          infectionSystem.setActive(true);
-          infectionSystem.setInterval(120);
-          infectionSystem.update();
-
-          containmentTimer++;
-          if (containmentTimer >= containmentGoal) {
-            missionComplete = true;
-          }
-        } else {
-          // Temporarily pause infection system ticks while reading dialogue
-          infectionSystem.setActive(false);
-        }
-      }
-      missionFailed = infectionSystem.hasFailed();
     }
 
     // --- MISSION 2: Safest path (Dijkstra) ---

@@ -205,7 +205,7 @@ class HUDView {
       return "Etapa " + s + "/4: " + stageNames[s - 1];
     }
     if (mid == 1) {
-      return (mission.missionPhase == 1) ? "Fase 1 — Rastrear" : "Fase 2 — Contener";
+      return "Objetivo: Rastrear agresor";
     }
     if (mid == 2) return "Elegir aliado → Calcular ruta";
     if (mid == 3) return "Analizar red → Reconstruir";
@@ -674,11 +674,7 @@ class HUDView {
     int stage = (mid == 5) ? mission.missionStage : 0;
 
     if (mid == 1 || stage == 1) {
-      if (mission.missionPhase == 1) {
-        return "¡Rastreo Manual! Haz clic izquierdo en Alicia para iniciar. Luego, cliquea en orden el nodo que debe salir de la estructura (ver Cola/Pila arriba). ¡Los nodos no descubiertos se irán revelando!";
-      } else {
-        return "¡Contención! Haz clic derecho en los enlaces rojos para bloquearlos e impedir que el virus de Ghost infecte al resto de la red.";
-      }
+      return "¡Rastreo Manual! Haz clic izquierdo en Alicia para iniciar. Luego, cliquea en orden el nodo que debe salir de la estructura (ver Cola/Pila arriba) para revelar a 'Ghost' (el agresor).";
     }
     if (mid == 2 || stage == 2) {
       if (!mission.dijkstraPathfinder.running) {
