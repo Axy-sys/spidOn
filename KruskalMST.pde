@@ -178,6 +178,10 @@ class KruskalMST {
       finished = true;
       currentEdge = null;
       currentStatus = "Kruskal terminado. Árbol de Expansión Mínima trazado. Costo: " + (int)totalCost;
+      if (game != null && game.sceneManager.currentScene instanceof MissionScene) {
+        MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+        ms.mstCost = totalCost;
+      }
     } else {
       step();
     }
