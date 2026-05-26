@@ -53,9 +53,30 @@ class KruskalMST {
       e.partOfMST = false;
     }
 
+    uf = new UnionFind(nodes);
+
+    // Pre-accept Dijkstra safest path edges if in Mission 5 Stage 3
+    if (game != null && game.sceneManager.currentScene != null && game.sceneManager.currentScene instanceof MissionScene) {
+      MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+      if (ms.missionID == 5 && ms.missionStage == 3 && ms.dijkstraPath != null && ms.dijkstraPath.size() > 1) {
+        for (int i = 0; i < ms.dijkstraPath.size() - 1; i++) {
+          Node u = ms.dijkstraPath.get(i);
+          Node v = ms.dijkstraPath.get(i + 1);
+          Edge e = getEdge(u, v);
+          if (e != null) {
+            e.partOfMST = true;
+            uf.union(u, v);
+            totalCost += e.cost;
+            edgesAdded++;
+            decisionHistory.add(u.name + " - " + v.name + " (Costo " + (int)e.cost + "): CONECTADO (Ruta Segura)");
+          }
+        }
+      }
+    }
+
     sortedEdges.clear();
     for (Edge e : edges) {
-      if (!e.blocked) {
+      if (!e.blocked && !e.partOfMST) {
         sortedEdges.add(e);
       }
     }
@@ -65,8 +86,6 @@ class KruskalMST {
         return Float.compare(e1.cost, e2.cost);
       }
     });
-
-    uf = new UnionFind(nodes);
   }
 
   boolean step() {
@@ -162,6 +181,15 @@ class KruskalMST {
     } else {
       step();
     }
+  }
+
+  Edge getEdge(Node u, Node v) {
+    for (Edge e : edges) {
+      if ((e.a == u && e.b == v) || (e.a == v && e.b == u)) {
+        return e;
+      }
+    }
+    return null;
   }
 }
 

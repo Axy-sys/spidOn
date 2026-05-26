@@ -107,7 +107,7 @@ class MissionScene extends Scene {
 
     score = 10000;
     showingHelpOverlay = false;
-    algorithmAutoPlay = true;
+    algorithmAutoPlay = false;
     algorithmStepRequested = false;
     playerInitials = "";
     initialsSaved = false;
@@ -146,6 +146,7 @@ class MissionScene extends Scene {
     infectionSystem.setInterval(180);
 
     dijkstraPathfinder = new DijkstraPathfinder(nodes, edges);
+    dijkstraPathfinder.manualMode = true;
     kruskalMST = new KruskalMST(nodes, edges);
     kruskalMST.manualMode = true;
     maxFlowCalculator = new FordFulkersonMaxFlow(nodes, edges);
@@ -404,11 +405,13 @@ class MissionScene extends Scene {
     // --- FF MAX FLOW STEP BY STEP UPDATES ---
     if (missionID == 4 || (missionID == 5 && missionStage == 4)) {
       if (maxFlowCalculator.running && !showingHelpOverlay && !dialogueSystem.isDialogueActive()) {
+        boolean justFinished = false;
         if (algorithmAutoPlay) {
           if (frameCount % 35 == 0) {
             maxFlowCalculator.step();
             if (maxFlowCalculator.finished) {
               calculatedMaxFlow = maxFlowCalculator.maxFlow;
+              justFinished = true;
             }
           }
         } else if (algorithmStepRequested) {
@@ -416,6 +419,15 @@ class MissionScene extends Scene {
           maxFlowCalculator.step();
           if (maxFlowCalculator.finished) {
             calculatedMaxFlow = maxFlowCalculator.maxFlow;
+            justFinished = true;
+          }
+        }
+
+        if (justFinished) {
+          if (missionID == 5 && missionStage == 4) {
+            dialogueSystem.eva("¡Flujo máximo calculado! El ataque de Ghost tiene un caudal de " + (int)calculatedMaxFlow + " unidades.");
+            dialogueSystem.eva("Los enlaces saturados (capacidad llena) forman el 'Corte Mínimo' de la red.");
+            dialogueSystem.eva("¡Haz clic derecho sobre cada enlace saturado para bloquearlo y salvar a Alicia!");
           }
         }
       }
@@ -505,7 +517,19 @@ class MissionScene extends Scene {
         }
       } else if (missionStage == 4) {
         if (calculatedMaxFlow > 0 && !missionComplete) {
-          missionComplete = true;
+          boolean allSaturatedBlocked = true;
+          int satCount = 0;
+          for (Edge e : edges) {
+            if (e.capacity > 0 && abs(e.flow - e.capacity) < 0.01) {
+              satCount++;
+              if (!e.blocked) {
+                allSaturatedBlocked = false;
+              }
+            }
+          }
+          if (satCount > 0 && allSaturatedBlocked) {
+            missionComplete = true;
+          }
         }
       }
     }

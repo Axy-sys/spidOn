@@ -18,6 +18,21 @@ class Edge {
   }
 
   void render() {
+    if (game != null && game.sceneManager.currentScene != null && game.sceneManager.currentScene instanceof MissionScene) {
+      MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+      if (ms.missionID == 1 || (ms.missionID == 5 && ms.missionStage == 1)) {
+        boolean aVisible = ms.traversal.getVisitedNodes().contains(a) ||
+                           a.name.equals("Alicia") ||
+                           (ms.traversalName.equals("BFS") ? ms.bfsTraversal.queue.contains(a) : ms.dfsTraversal.stack.contains(a));
+        boolean bVisible = ms.traversal.getVisitedNodes().contains(b) ||
+                           b.name.equals("Alicia") ||
+                           (ms.traversalName.equals("BFS") ? ms.bfsTraversal.queue.contains(b) : ms.dfsTraversal.stack.contains(b));
+        if (!aVisible || !bVisible) {
+          return; // Skip rendering
+        }
+      }
+    }
+
     int currentMission = 1;
     boolean isMSTMission = false;
     boolean isSandbox = false;

@@ -34,30 +34,77 @@ class MissionController {
     // --- MISSION 1 OR MISSION 5 STAGE 1 ---
     if (mid == 1 || stage == 1) {
       if (button == LEFT) {
+        Node clickedNode = null;
         for (Node n : mission.nodes) {
           if (dist(mx, my, n.x, n.y) < 30) {
-            mission.selectedNode = n;
-            mission.dialogueSystem.say(n.x, n.y - 60, "Analizando " + n.name);
-            mission.messageLog.add("EVA", n.name, "Analizando " + n.name, 2);
-
-            mission.traversal.reset();
-            mission.traversal.start(n);
-
-            // Disable glow hints after first click
-            mission.clearGlowHints();
-
-            if (mid == 1 && n.name.equals("Ghost") && !mission.sourceFound) {
-              mission.sourceFound = true;
-              mission.dialogueSystem.eva("¡Excelente! Encontraste a Ghost, la cuenta agresora.");
-              mission.dialogueSystem.alert("¡Origen del acoso detectado!");
-            } else if (!n.name.equals("Ghost")) {
-              mission.dialogueSystem.eva("Rastreando desde " + n.name + "... Sigue explorando para encontrar al agresor.");
-            }
-            return;
+            clickedNode = n;
+            break;
           }
         }
-        // Clicked on empty space
-        mission.dialogueSystem.eva("Haz clic directamente sobre un usuario (los círculos brillantes) para rastrear la red.");
+
+        if (clickedNode != null) {
+          if (!mission.traversal.isRunning()) {
+            if (clickedNode.name.equals("Alicia")) {
+              mission.selectedNode = clickedNode;
+              mission.traversal.reset();
+              mission.traversal.start(clickedNode);
+              mission.clearGlowHints();
+              mission.dialogueSystem.eva("Rastreo iniciado desde Alicia. Sigue el orden del algoritmo (mira la Cola/Pila a la derecha).");
+              soundManager.playSelect();
+            } else {
+              mission.score = max(0, mission.score - 100);
+              soundManager.playError();
+              mission.dialogueSystem.eva("Debes iniciar la investigación haciendo clic en Alicia, la víctima (-100 pts).");
+            }
+          } else {
+            Node expectedNode = null;
+            if (mission.traversalName.equals("BFS")) {
+              if (mission.bfsTraversal.queue.size() > 0) {
+                expectedNode = mission.bfsTraversal.queue.get(0);
+              }
+            } else {
+              if (mission.dfsTraversal.stack.size() > 0) {
+                expectedNode = mission.dfsTraversal.stack.get(mission.dfsTraversal.stack.size() - 1);
+              }
+            }
+
+            if (expectedNode != null) {
+              if (clickedNode == expectedNode) {
+                soundManager.playSuccess();
+                mission.dialogueSystem.say(clickedNode.x, clickedNode.y - 60, "Revelando " + clickedNode.name);
+                mission.messageLog.add("EVA", clickedNode.name, "Escaneando " + clickedNode.name, 2);
+
+                if (mission.traversalName.equals("BFS")) {
+                  mission.bfsTraversal.stepRequested = true;
+                  mission.bfsTraversal.update();
+                } else {
+                  mission.dfsTraversal.stepRequested = true;
+                  mission.dfsTraversal.update();
+                }
+
+                if (clickedNode.name.equals("Ghost")) {
+                  soundManager.playSuccess();
+                  mission.dialogueSystem.eva("¡ALERTA! Has revelado a 'Ghost', el origen del acoso.");
+                  mission.messageLog.add("ALERTA", "Ghost", "Origen detectado", 0);
+                  if (mid == 1) {
+                    mission.sourceFound = true;
+                  }
+                } else {
+                  mission.dialogueSystem.eva("Nodo " + clickedNode.name + " escaneado. Sigue con el siguiente de la estructura.");
+                }
+              } else {
+                mission.score = max(0, mission.score - 150);
+                soundManager.playError();
+                mission.dialogueSystem.eva("¡Error de orden! " + clickedNode.name + " no es el siguiente en la estructura de " + mission.traversalName + " (-150 pts).");
+              }
+            } else {
+              mission.dialogueSystem.eva("El recorrido ya ha finalizado.");
+            }
+          }
+          return;
+        }
+
+        mission.dialogueSystem.eva("Haz clic sobre un nodo para expandir la red según el algoritmo activo.");
       }
 
       if (button == RIGHT) {
@@ -77,29 +124,41 @@ class MissionController {
     // --- MISSION 2 OR MISSION 5 STAGE 2 ---
     else if (mid == 2 || stage == 2) {
       if (button == LEFT) {
+        Node clickedNode = null;
         for (Node n : mission.nodes) {
           if (dist(mx, my, n.x, n.y) < 30) {
-            if (n.supportive || n.name.equals("Bruno") || n.name.equals("Sara") || n.name.equals("Valeria")) {
-              mission.dialogueSystem.say(n.x, n.y - 60, "Iniciando Dijkstra...");
-
-              // Disable glow hints
-              mission.clearGlowHints();
-
-              Node alicia = mission.getNode("Alicia");
-              if (alicia != null) {
-                mission.dijkstraPath = null;
-                mission.dijkstraPathfinder.startStepByStep(n, alicia);
-                mission.dialogueSystem.eva("¡Dijkstra iniciado! El algoritmo relajará conexiones para hallar el camino óptimo.");
-                mission.messageLog.add("DIJKSTRA", "Alicia", "Búsqueda de ruta segura desde " + n.name, 1);
-              }
-            } else {
-              mission.score = max(0, mission.score - 200); // Penalty
-              mission.dialogueSystem.eva(n.name + " no es un aliado. Busca los nodos que brillan (penalización -200 pts).");
-            }
-            return;
+            clickedNode = n;
+            break;
           }
         }
-        mission.dialogueSystem.eva("Haz clic en uno de los nodos que brillan (Bruno, Valeria o Sara) para trazar la ruta segura.");
+
+        if (clickedNode != null) {
+          if (mission.dijkstraPathfinder.running) {
+            mission.dijkstraPathfinder.handleNodeClick(clickedNode);
+            return;
+          }
+
+          if (clickedNode.supportive || clickedNode.name.equals("Bruno") || clickedNode.name.equals("Sara") || clickedNode.name.equals("Valeria")) {
+            mission.dialogueSystem.say(clickedNode.x, clickedNode.y - 60, "Iniciando Dijkstra...");
+            mission.clearGlowHints();
+
+            Node alicia = mission.getNode("Alicia");
+            if (alicia != null) {
+              mission.dijkstraPath = null;
+              mission.dijkstraPathfinder.startStepByStep(clickedNode, alicia);
+              mission.dialogueSystem.eva("¡Dijkstra iniciado! Selecciona el nodo con menor distancia tentativa (" + clickedNode.name + ").");
+              mission.messageLog.add("DIJKSTRA", "Alicia", "Búsqueda de ruta segura desde " + clickedNode.name, 1);
+              soundManager.playSelect();
+            }
+          } else {
+            mission.score = max(0, mission.score - 200);
+            soundManager.playError();
+            mission.dialogueSystem.eva(clickedNode.name + " no es un aliado de apoyo brillante (-200 pts).");
+          }
+          return;
+        } else {
+          mission.dialogueSystem.eva("Haz clic en uno de los nodos que brillan (Bruno, Valeria o Sara) para trazar la ruta segura.");
+        }
       }
     }
 
@@ -162,6 +221,26 @@ class MissionController {
           }
         } else {
           mission.dialogueSystem.eva("Haz clic sobre un nodo para definir Fuente o Destino para el análisis de flujo.");
+        }
+      }
+
+      if (button == RIGHT && mission.calculatedMaxFlow > 0) {
+        for (Edge e : mission.edges) {
+          if (e.isMouseNear(mx, my)) {
+            boolean isSaturated = (e.capacity > 0 && abs(e.flow - e.capacity) < 0.01);
+            if (isSaturated) {
+              e.blocked = !e.blocked;
+              String msg = e.blocked ? "¡Enlace saturado bloqueado! El ataque ha sido mitigado en esta ruta." : "Enlace restaurado.";
+              mission.dialogueSystem.say((e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2 - 20, e.blocked ? "Bloqueado" : "Restaurado");
+              mission.dialogueSystem.eva(msg);
+              mission.messageLog.add("EVA", "CONVERGENCIA", e.blocked ? "Corte aplicado" : "Corte removido", e.blocked ? 0 : 1);
+              soundManager.playSuccess();
+            } else {
+              mission.dialogueSystem.eva("Este enlace no está saturado. Para bloquear el flujo de ataque, debes cortar los enlaces del 'Corte Mínimo' (saturados).");
+              soundManager.playError();
+            }
+            return;
+          }
         }
       }
     }

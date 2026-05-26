@@ -675,24 +675,47 @@ class HUDView {
 
     if (mid == 1 || stage == 1) {
       if (mission.missionPhase == 1) {
-        return "Haz clic en Alicia para iniciar el rastreo. EVA te guiará. Observa cómo BFS explora nivel a nivel, y DFS explora en profundidad.";
+        return "¡Rastreo Manual! Haz clic izquierdo en Alicia para iniciar. Luego, cliquea en orden el nodo que debe salir de la estructura (ver Cola/Pila arriba). ¡Los nodos no descubiertos se irán revelando!";
       } else {
-        return "¡Contención! Haz clic derecho en los enlaces rojos para bloquearlos e impedir que la toxicidad infecte la red social.";
+        return "¡Contención! Haz clic derecho en los enlaces rojos para bloquearlos e impedir que el virus de Ghost infecte al resto de la red.";
       }
     }
     if (mid == 2 || stage == 2) {
-      return "Selecciona a Bruno, Valeria o Sara como apoyo. Ejecuta Dijkstra para encontrar la ruta con menor riesgo hacia la víctima.";
+      if (!mission.dijkstraPathfinder.running) {
+        return "Haz clic izquierdo en un nodo aliado de apoyo (Bruno, Valeria o Sara) para iniciar Dijkstra.";
+      } else {
+        if (mission.dijkstraPathfinder.waitingForNodeSelection) {
+          return "Fase de Selección: Haz clic en el nodo no visitado que tenga la menor distancia tentativa (resaltado con flecha/círculo).";
+        } else {
+          return "Fase de Relajación: Haz clic en cada uno de los vecinos del nodo actual para actualizar o relajar su distancia temporal.";
+        }
+      }
     }
     if (mid == 3 || stage == 3) {
-      return "Analiza el costo de conexión de la red. Ejecuta Kruskal para reconstruir la red completa con el costo mínimo social posible.";
+      if (!mission.kruskalMST.running) {
+        return "Haz clic en cualquier parte de la red para inicializar Kruskal.";
+      } else {
+        if (mission.kruskalMST.waitingForDecision) {
+          return "Analizando arista candidata (amarilla intermitente). Haz clic en ACEPTAR (en el HUD) si conecta nodos sin formar ciclos, o RECHAZAR si crearía un bucle.";
+        } else {
+          return "Procesando aristas...";
+        }
+      }
     }
     if (mid == 4 || stage == 4) {
       if (mission.selectedStartNode == null) {
-        return "Haz clic sobre cualquier nodo para establecer la FUENTE del flujo (ej. Ghost).";
+        return "Haz clic izquierdo sobre el nodo FUENTE de los mensajes de acoso (ej. Ghost).";
       } else if (mission.selectedEndNode == null) {
-        return "Haz clic sobre otro nodo para establecer el DESTINO (ej. Alicia).";
+        return "Haz clic izquierdo sobre el nodo DESTINO (ej. Alicia).";
       } else {
-        return "Fuente y Destino listos. Haz clic en AUTO o PASO en el visualizador para iniciar el algoritmo Ford-Fulkerson.";
+        if (mission.maxFlowCalculator.running) {
+          if (mission.calculatedMaxFlow > 0) {
+            return "¡Flujo Máximo calculado! Los enlaces al límite de su capacidad están saturados (rojos). Haz clic derecho sobre ellos para aplicar cortafuegos (Corte Mínimo) y aislar a Ghost.";
+          }
+          return "Trazado Manual: Haz clic en la Fuente y luego avanza nodo a nodo vecino (con capacidad > 0) hasta llegar al Destino para trazar un camino de aumento.";
+        } else {
+          return "Fuente y Destino listos. Haz clic izquierdo en la pantalla para iniciar el algoritmo manual de Ford-Fulkerson.";
+        }
       }
     }
     return "";

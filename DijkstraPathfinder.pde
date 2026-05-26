@@ -11,6 +11,12 @@ class DijkstraPathfinder {
   Node currentNode = null;
   String currentStatus = "No iniciado";
 
+  boolean manualMode = false;
+  boolean waitingForNodeSelection = false;
+  boolean waitingForRelaxations = false;
+  Node expectedMinNode = null;
+  ArrayList<Node> relaxedNeighbors = new ArrayList<Node>();
+
   DijkstraPathfinder(ArrayList<Node> nodes, ArrayList<Edge> edges) {
     this.nodes = nodes;
     this.edges = edges;
@@ -34,6 +40,10 @@ class DijkstraPathfinder {
     this.finished = false;
     this.currentNode = null;
     this.currentStatus = "Inicializando Dijkstra desde " + start.name;
+    this.waitingForNodeSelection = true;
+    this.waitingForRelaxations = false;
+    this.expectedMinNode = start;
+    this.relaxedNeighbors.clear();
 
     for (Node n : nodes) {
       n.dijkstraDist = Float.MAX_VALUE;
@@ -116,5 +126,134 @@ class DijkstraPathfinder {
       }
     }
     return null;
+  }
+
+  Node findNextExpectedMinNode() {
+    Node minNode = null;
+    float minDist = Float.MAX_VALUE;
+    for (Node n : unvisited) {
+      if (n.dijkstraDist < minDist) {
+        minDist = n.dijkstraDist;
+        minNode = n;
+      }
+    }
+    return minNode;
+  }
+
+  void handleNodeClick(Node n) {
+    if (!running || finished || !manualMode) return;
+
+    if (waitingForNodeSelection) {
+      expectedMinNode = findNextExpectedMinNode();
+      if (expectedMinNode == null) {
+        running = false;
+        finished = true;
+        currentNode = null;
+        currentStatus = "Búsqueda terminada. Nodos restantes inalcanzables.";
+        return;
+      }
+
+      if (n == expectedMinNode) {
+        currentNode = n;
+        n.visited = true;
+        unvisited.remove(n);
+        soundManager.playSuccess();
+
+        if (n == endNode) {
+          running = false;
+          finished = true;
+          currentNode = null;
+          currentStatus = "Destino " + endNode.name + " alcanzado. ¡Ruta óptima calculada!";
+          if (game.sceneManager.currentScene instanceof MissionScene) {
+            MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+            ms.dijkstraPath = getPath();
+          }
+        } else {
+          // Prepare neighbors to relax
+          relaxedNeighbors.clear();
+          for (Node neighbor : currentNode.neighbors) {
+            if (!neighbor.visited) {
+              Edge e = getEdge(currentNode, neighbor);
+              if (e != null && !e.blocked) {
+                relaxedNeighbors.add(neighbor);
+              }
+            }
+          }
+
+          if (relaxedNeighbors.isEmpty()) {
+            waitingForNodeSelection = true;
+            expectedMinNode = findNextExpectedMinNode();
+            currentStatus = "Nodo " + currentNode.name + " procesado. Selecciona el siguiente nodo no visitado con menor distancia.";
+          } else {
+            waitingForNodeSelection = false;
+            waitingForRelaxations = true;
+            String neighborsStr = "";
+            for (int i = 0; i < relaxedNeighbors.size(); i++) {
+              neighborsStr += relaxedNeighbors.get(i).name + (i < relaxedNeighbors.size() - 1 ? ", " : "");
+            }
+            currentStatus = "Procesando " + currentNode.name + ". Haz clic en sus vecinos (" + neighborsStr + ") para relajar sus distancias.";
+          }
+        }
+      } else {
+        soundManager.playError();
+        if (game.sceneManager.currentScene instanceof MissionScene) {
+          MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+          ms.score = max(0, ms.score - 150);
+          ms.dialogueSystem.eva("¡Incorrecto! Debes seleccionar el nodo no visitado con menor distancia tentativa: " + expectedMinNode.name + " (-150 pts).");
+          ms.triggerAlert("-150 PENALIZACIÓN");
+        }
+      }
+    } else if (waitingForRelaxations) {
+      if (relaxedNeighbors.contains(n)) {
+        Edge e = getEdge(currentNode, n);
+        float altDist = currentNode.dijkstraDist + e.weight;
+        boolean updated = false;
+        if (altDist < n.dijkstraDist) {
+          n.dijkstraDist = altDist;
+          n.dijkstraParent = currentNode;
+          updated = true;
+        }
+
+        relaxedNeighbors.remove(n);
+        soundManager.playSelect();
+        
+        if (game.sceneManager.currentScene instanceof MissionScene) {
+          MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+          ms.score += 200;
+          ms.triggerAlert("+200 RELAJACIÓN");
+          if (updated) {
+            ms.dialogueSystem.eva("¡Relajado! " + n.name + " ahora está a distancia " + (int)n.dijkstraDist + " vía " + currentNode.name + ".");
+          } else {
+            ms.dialogueSystem.eva(n.name + " ya tiene un camino más corto de longitud " + (int)n.dijkstraDist + ".");
+          }
+        }
+
+        if (relaxedNeighbors.isEmpty()) {
+          waitingForRelaxations = false;
+          waitingForNodeSelection = true;
+          expectedMinNode = findNextExpectedMinNode();
+          if (expectedMinNode == null) {
+            running = false;
+            finished = true;
+            currentNode = null;
+            currentStatus = "Búsqueda terminada. Nodos restantes inalcanzables.";
+          } else {
+            currentStatus = "Relajaciones completadas. Selecciona el siguiente nodo no visitado con menor distancia tentativa (" + expectedMinNode.name + ").";
+          }
+        } else {
+          String neighborsStr = "";
+          for (int i = 0; i < relaxedNeighbors.size(); i++) {
+            neighborsStr += relaxedNeighbors.get(i).name + (i < relaxedNeighbors.size() - 1 ? ", " : "");
+          }
+          currentStatus = "Relajando vecinos... Quedan: " + neighborsStr;
+        }
+      } else {
+        soundManager.playError();
+        if (game.sceneManager.currentScene instanceof MissionScene) {
+          MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+          ms.dialogueSystem.eva("Debes relajar los vecinos del nodo activo (" + currentNode.name + ").");
+        }
+      }
+    }
   }
 }

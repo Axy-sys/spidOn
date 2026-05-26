@@ -17,7 +17,7 @@ class DFSTraversal implements TraversalStrategy {
 
   int timer = 0;
   int stepDelay = 35;
-  boolean autoPlay = true;
+  boolean autoPlay = false;
   boolean stepRequested = false;
 
   float deepPulse = 0;
@@ -56,6 +56,10 @@ class DFSTraversal implements TraversalStrategy {
 
     stack.add(start);
     visitedNodes.add(start);
+
+    // Pop origin immediately to enqueue neighbors
+    stack.remove(stack.size() - 1);
+    processNeighbors(start);
 
     dialogueSystem.eva("DFS activado.");
     dialogueSystem.eva("Seguiremos la cadena más profunda.");

@@ -17,7 +17,7 @@ class BFSTraversal implements TraversalStrategy {
 
   int timer = 0;
   int stepDelay = 32;
-  boolean autoPlay = true;
+  boolean autoPlay = false;
   boolean stepRequested = false;
 
   float waveRadius = 0;
@@ -57,6 +57,10 @@ class BFSTraversal implements TraversalStrategy {
 
     queue.add(start);
     visitedNodes.add(start);
+
+    // Pop origin immediately to enqueue neighbors
+    queue.remove(0);
+    processNeighbors(start);
 
     dialogueSystem.eva("Rastreo por niveles iniciado.");
     dialogueSystem.eva("BFS nos ayuda a ver cómo se expande el acoso.");

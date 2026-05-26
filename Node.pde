@@ -88,6 +88,40 @@ class Node {
 
     float r = 26 + sin(frameCount * 0.08 + pulseOffset) * 2;
 
+    boolean isHidden = false;
+    boolean revealRoleColors = true;
+
+    if (game != null && game.sceneManager.currentScene != null && game.sceneManager.currentScene instanceof MissionScene) {
+      MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+      if (ms.missionID == 1 || (ms.missionID == 5 && ms.missionStage == 1)) {
+        boolean inQueueOrStack = false;
+        if (ms.traversalName.equals("BFS")) {
+          inQueueOrStack = ms.bfsTraversal.queue.contains(this);
+        } else {
+          inQueueOrStack = ms.dfsTraversal.stack.contains(this);
+        }
+
+        if (name.equals("Alicia")) {
+          isHidden = false;
+          revealRoleColors = visited;
+        } else if (visited) {
+          isHidden = false;
+          revealRoleColors = true;
+        } else if (inQueueOrStack) {
+          isHidden = false;
+          revealRoleColors = false; // Discovered but neutral style
+        } else {
+          isHidden = true;
+          revealRoleColors = false;
+        }
+
+        if (ms.selectedNode == this) {
+          isHidden = false;
+          revealRoleColors = visited;
+        }
+      }
+    }
+
     // ─── Glow hint ring + label ───────────────────────────
     if (glowHint) {
       pushStyle();
@@ -128,14 +162,17 @@ class Node {
     // ─── Outer ambient glow ───────────────────────────────
     noStroke();
 
-    if (colorblindMode) {
-      if (infected) {
+    if (isHidden) {
+      fill(80, 80, 80, 15);
+      ellipse(0, 0, 78, 78);
+    } else if (colorblindMode) {
+      if (revealRoleColors && infected) {
         fill(230, 97, 1, 45); // high-contrast orange
         ellipse(0, 0, 88, 88);
-      } else if (supportive) {
+      } else if (revealRoleColors && supportive) {
         fill(94, 60, 153, 35); // high-contrast purple
         ellipse(0, 0, 82, 82);
-      } else if (vulnerable) {
+      } else if (revealRoleColors && vulnerable) {
         fill(253, 184, 99, 35); // high-contrast light yellow
         ellipse(0, 0, 82, 82);
       } else {
@@ -143,13 +180,13 @@ class Node {
         ellipse(0, 0, 78, 78);
       }
     } else {
-      if (infected) {
+      if (revealRoleColors && infected) {
         fill(255, 60, 90, 35);
         ellipse(0, 0, 88, 88);
-      } else if (supportive) {
+      } else if (revealRoleColors && supportive) {
         fill(0, 255, 120, 28);
         ellipse(0, 0, 82, 82);
-      } else if (vulnerable) {
+      } else if (revealRoleColors && vulnerable) {
         fill(255, 220, 0, 28);
         ellipse(0, 0, 82, 82);
       } else {
@@ -161,14 +198,17 @@ class Node {
     // ─── Main body circle ─────────────────────────────────
     strokeWeight(3);
 
-    if (colorblindMode) {
-      if (infected) {
+    if (isHidden) {
+      stroke(100, 100, 100);
+      fill(20, 20, 25);
+    } else if (colorblindMode) {
+      if (revealRoleColors && infected) {
         stroke(230, 97, 1);
         fill(60, 25, 0);
-      } else if (supportive) {
+      } else if (revealRoleColors && supportive) {
         stroke(94, 60, 153);
         fill(25, 10, 45);
-      } else if (vulnerable) {
+      } else if (revealRoleColors && vulnerable) {
         stroke(253, 184, 99);
         fill(45, 30, 10);
       } else {
@@ -176,13 +216,13 @@ class Node {
         fill(30, 30, 30);
       }
     } else {
-      if (infected) {
+      if (revealRoleColors && infected) {
         stroke(255, 0, 80);
         fill(60, 0, 20);
-      } else if (supportive) {
+      } else if (revealRoleColors && supportive) {
         stroke(0, 255, 120);
         fill(10, 40, 25);
-      } else if (vulnerable) {
+      } else if (revealRoleColors && vulnerable) {
         stroke(255, 220, 0);
         fill(40, 35, 0);
       } else {
@@ -194,13 +234,15 @@ class Node {
     ellipse(0, 0, r * 2, r * 2);
 
     // Inner highlight disc
-    noStroke();
-    if (colorblindMode) {
-      fill(infected ? color(230, 97, 1) : color(247, 247, 247));
-    } else {
-      fill(infected ? color(255, 60, 120) : color(0, 255, 255));
+    if (!isHidden) {
+      noStroke();
+      if (colorblindMode) {
+        fill((revealRoleColors && infected) ? color(230, 97, 1) : color(247, 247, 247));
+      } else {
+        fill((revealRoleColors && infected) ? color(255, 60, 120) : color(0, 255, 255));
+      }
+      ellipse(0, 0, radius * 0.8, radius * 0.8);
     }
-    ellipse(0, 0, radius * 0.8, radius * 0.8);
 
     // ─── Visited ring ─────────────────────────────────────
     if (visited) {
@@ -237,17 +279,18 @@ class Node {
     textAlign(CENTER, CENTER);
     float nameTextSize = largeTextMode ? 20 : 15;
     textSize(nameTextSize);
-    float nameTw = textWidth(name) + 14;
+    String displayName = isHidden ? "???" : name;
+    float nameTw = textWidth(displayName) + 14;
     float nameTh = largeTextMode ? 26 : 20;
     noStroke();
     fill(0, 0, 0, 140);
     rect(-nameTw / 2, -42 - nameTh / 2, nameTw, nameTh, 8);
     fill(255);
-    text(name, 0, -42);
+    text(displayName, 0, -42);
     popStyle();
 
     // ─── Role label with dark background pill ─────────────
-    if (role != null && role.length() > 0) {
+    if (!isHidden && role != null && role.length() > 0 && revealRoleColors) {
       pushStyle();
       textAlign(CENTER, CENTER);
       float roleTextSize = largeTextMode ? 15 : 11;
@@ -271,27 +314,29 @@ class Node {
     }
 
     // ─── Infection / Accessibility Badge ──────────────────
-    pushStyle();
-    textAlign(CENTER, CENTER);
-    if (colorblindMode) {
-      fill(255);
-      textSize(largeTextMode ? 16 : 12);
-      String badge = "[N]";
-      if (infected) badge = "[X]";
-      else if (shielded) badge = "[S]";
-      else if (supportive) badge = "[A]";
-      else if (vulnerable) badge = "[V]";
-      text(badge, 0, 2);
-    } else if (shielded) {
-      fill(0, 255, 255);
-      textSize(largeTextMode ? 16 : 12);
-      text("🛡️", 0, 2);
-    } else if (infected) {
-      fill(255);
-      textSize(largeTextMode ? 22 : 18);
-      text("!", 0, 2);
+    if (!isHidden && revealRoleColors) {
+      pushStyle();
+      textAlign(CENTER, CENTER);
+      if (colorblindMode) {
+        fill(255);
+        textSize(largeTextMode ? 16 : 12);
+        String badge = "[N]";
+        if (infected) badge = "[X]";
+        else if (shielded) badge = "[S]";
+        else if (supportive) badge = "[A]";
+        else if (vulnerable) badge = "[V]";
+        text(badge, 0, 2);
+      } else if (shielded) {
+        fill(0, 255, 255);
+        textSize(largeTextMode ? 16 : 12);
+        text("🛡️", 0, 2);
+      } else if (infected) {
+        fill(255);
+        textSize(largeTextMode ? 22 : 18);
+        text("!", 0, 2);
+      }
+      popStyle();
     }
-    popStyle();
 
     // ─── Hover tooltip ────────────────────────────────────
     if (hovered && role != null && role.length() > 0) {
@@ -317,6 +362,14 @@ class Node {
   }
 
   void drawStressBar() {
+    boolean isHidden = false;
+    if (game != null && game.sceneManager.currentScene != null && game.sceneManager.currentScene instanceof MissionScene) {
+      MissionScene ms = (MissionScene) game.sceneManager.currentScene;
+      if ((ms.missionID == 1 || (ms.missionID == 5 && ms.missionStage == 1)) && !visited) {
+        isHidden = true;
+      }
+    }
+    if (isHidden) return;
 
     float w = 42;
     float h = 6;
