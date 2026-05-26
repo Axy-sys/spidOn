@@ -1,12 +1,20 @@
 import javax.sound.sampled.*;
+import java.util.concurrent.*;
 
 class SoundManager {
   private final int SAMPLE_RATE = 16000; // 16kHz for low resource footprint
+  private final ExecutorService executor = Executors.newFixedThreadPool(3, new ThreadFactory() {
+    public Thread newThread(Runnable r) {
+      Thread t = new Thread(r);
+      t.setDaemon(true);
+      return t;
+    }
+  });
 
   SoundManager() {}
 
   void playTone(final float frequency, final int durationMs, final float volume) {
-    new Thread(new Runnable() {
+    executor.submit(new Runnable() {
       public void run() {
         try {
           // Calculate length of the buffer
@@ -35,7 +43,7 @@ class SoundManager {
           // Silently fail if audio system is busy or unavailable
         }
       }
-    }).start();
+    });
   }
 
   void playClick() {
@@ -47,7 +55,7 @@ class SoundManager {
   }
 
   void playSuccess() {
-    new Thread(new Runnable() {
+    executor.submit(new Runnable() {
       public void run() {
         try {
           playToneSync(523.25f, 90, 0.25f);  // C5
@@ -56,22 +64,22 @@ class SoundManager {
           playToneSync(1046.50f, 160, 0.3f); // C6
         } catch (Exception e) {}
       }
-    }).start();
+    });
   }
 
   void playError() {
-    new Thread(new Runnable() {
+    executor.submit(new Runnable() {
       public void run() {
         try {
           playToneSync(160, 140, 0.35f);
           playToneSync(110, 220, 0.35f);
         } catch (Exception e) {}
       }
-    }).start();
+    });
   }
 
   void playInfect() {
-    new Thread(new Runnable() {
+    executor.submit(new Runnable() {
       public void run() {
         try {
           playToneSync(280, 70, 0.25f);
@@ -79,11 +87,11 @@ class SoundManager {
           playToneSync(130, 110, 0.25f);
         } catch (Exception e) {}
       }
-    }).start();
+    });
   }
 
   void playHeal() {
-    new Thread(new Runnable() {
+    executor.submit(new Runnable() {
       public void run() {
         try {
           playToneSync(320, 70, 0.25f);
@@ -91,7 +99,7 @@ class SoundManager {
           playToneSync(720, 110, 0.25f);
         } catch (Exception e) {}
       }
-    }).start();
+    });
   }
 
   private void playToneSync(float frequency, int durationMs, float volume) throws Exception {
@@ -112,5 +120,9 @@ class SoundManager {
     sdl.write(buf, 0, buf.length);
     sdl.drain();
     sdl.close();
+  }
+
+  private float map(float value, float start1, float stop1, float start2, float stop2) {
+    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
   }
 }

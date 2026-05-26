@@ -96,7 +96,11 @@ class KruskalMST {
       finished = true;
       currentEdge = null;
       waitingForDecision = false;
-      currentStatus = "Kruskal terminado. Árbol de Expansión Mínima trazado. Costo: " + (int)totalCost;
+      if (edgesAdded < nodes.size() - 1) {
+        currentStatus = "Kruskal terminado. Red fragmentada: MST incompleto. Costo: " + (int)totalCost;
+      } else {
+        currentStatus = "Kruskal terminado. Árbol de Expansión Mínima trazado. Costo: " + (int)totalCost;
+      }
       return true;
     }
 
@@ -177,7 +181,11 @@ class KruskalMST {
       running = false;
       finished = true;
       currentEdge = null;
-      currentStatus = "Kruskal terminado. Árbol de Expansión Mínima trazado. Costo: " + (int)totalCost;
+      if (edgesAdded < nodes.size() - 1) {
+        currentStatus = "Kruskal terminado. Red fragmentada: MST incompleto. Costo: " + (int)totalCost;
+      } else {
+        currentStatus = "Kruskal terminado. Árbol de Expansión Mínima trazado. Costo: " + (int)totalCost;
+      }
       if (game != null && game.sceneManager.currentScene instanceof MissionScene) {
         MissionScene ms = (MissionScene) game.sceneManager.currentScene;
         ms.mstCost = totalCost;
