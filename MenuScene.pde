@@ -178,12 +178,12 @@ class MenuScene extends Scene {
 
     // Render Buttons
     String[] options = {
-      "[ 🟢 INICIAR CAMPAÑA ]",
-      "[ 🛠️ CREAR RED (SANDBOX) ]",
-      "[ ⚔️ DUELO LOCAL (1v1) ]",
-      "[ ♿ ACCESIBILIDAD & AJUSTES ]",
-      "[ 🏆 MEJORES PUNTAJES ]",
-      "[ ❌ SALIR DEL JUEGO ]"
+      "[  INICIAR CAMPAÑA ]",
+      "[  CREAR RED (SANDBOX) ]",
+      "[  DUELO LOCAL (1v1) ]",
+      "[  ACCESIBILIDAD & AJUSTES ]",
+      "[  MEJORES PUNTAJES ]",
+      "[  SALIR DEL JUEGO ]"
     };
 
     float startY = 320;

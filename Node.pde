@@ -101,7 +101,7 @@ class Node {
           inQueueOrStack = ms.dfsTraversal.stack.contains(this);
         }
 
-        if (name.equals("Alicia")) {
+        if (name.equals("Ana")) {
           isHidden = false;
           revealRoleColors = visited;
         } else if (visited) {

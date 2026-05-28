@@ -61,8 +61,8 @@ class DFSTraversal implements TraversalStrategy {
     stack.remove(stack.size() - 1);
     processNeighbors(start);
 
-    dialogueSystem.eva("DFS activado.");
-    dialogueSystem.eva("Seguiremos la cadena más profunda.");
+    dialogueSystem.eva("DFS activado: rastreo en profundidad desde " + start.name + ".");
+    dialogueSystem.eva("Haz clic en el siguiente nodo de la PILA (panel derecho) para seguir la cadena de intrusión.");
   }
 
   void update() {
@@ -241,31 +241,31 @@ class DFSTraversal implements TraversalStrategy {
   String getTraversalMessage(Node from) {
 
     if (from.infected) {
-      String[] toxic = {
-        "mira esto",
-        "compártelo",
-        "qué vergüenza",
-        "nadie te toma en serio",
-        "deberías borrarlo"
+      String[] hacking = {
+        "acceso no autorizado",
+        "datos exfiltrados",
+        "conexión maliciosa",
+        "sesión comprometida",
+        "brecha detectada"
       };
-      return toxic[int(random(toxic.length))];
+      return hacking[int(random(hacking.length))];
     }
 
     if (from.supportive) {
-      String[] support = {
-        "no estás sola",
-        "te apoyamos",
-        "ya reporté esto",
-        "vamos a ayudarte",
-        "respira, estamos contigo"
+      String[] defense = {
+        "canal seguro",
+        "firewall activo",
+        "acceso verificado",
+        "nodo limpio",
+        "enlace confiable"
       };
-      return support[int(random(support.length))];
+      return defense[int(random(defense.length))];
     }
 
     String[] neutral = {
-      "mensaje detectado",
+      "escaneando nodo",
       "cadena analizada",
-      "ruta revisada"
+      "ruta verificada"
     };
 
     return neutral[int(random(neutral.length))];

@@ -62,11 +62,11 @@ class BFSTraversal implements TraversalStrategy {
     queue.remove(0);
     processNeighbors(start);
 
-    dialogueSystem.eva("Rastreo por niveles iniciado.");
-    dialogueSystem.eva("BFS nos ayuda a ver cómo se expande el acoso.");
+    dialogueSystem.eva("Rastreo BFS iniciado desde " + start.name + ". La red de NexaCorp se expande por niveles.");
+    dialogueSystem.eva("Haz clic en el siguiente nodo de la COLA (panel derecho) para continuar el rastreo.");
 
     if (messageLog != null) {
-      messageLog.add("EVA", start.name, "Rastreo por niveles iniciado", 2);
+      messageLog.add("EVA", start.name, "Rastreo BFS iniciado desde " + start.name, 2);
     }
   }
 
@@ -245,31 +245,31 @@ class BFSTraversal implements TraversalStrategy {
   String getTraversalMessage(Node from) {
 
     if (from.infected) {
-      String[] toxic = {
-        "mira esto",
-        "compártelo",
-        "qué vergüenza",
-        "nadie te toma en serio",
-        "deberías borrarlo"
+      String[] hacking = {
+        "acceso no autorizado",
+        "datos exfiltrados",
+        "credenciales robadas",
+        "tráfico sospechoso",
+        "brecha detectada"
       };
-      return toxic[int(random(toxic.length))];
+      return hacking[int(random(hacking.length))];
     }
 
     if (from.supportive) {
-      String[] support = {
-        "no estás sola",
-        "te apoyamos",
-        "ya reporté esto",
-        "vamos a ayudarte",
-        "respira, estamos contigo"
+      String[] defense = {
+        "canal seguro",
+        "firewall activo",
+        "ruta protegida",
+        "acceso verificado",
+        "enlace confiable"
       };
-      return support[int(random(support.length))];
+      return defense[int(random(defense.length))];
     }
 
     String[] neutral = {
-      "mensaje detectado",
-      "interacción revisada",
-      "ruta analizada"
+      "escaneando nodo",
+      "analizando tráfico",
+      "verificando conexión"
     };
 
     return neutral[int(random(neutral.length))];

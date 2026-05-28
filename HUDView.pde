@@ -413,14 +413,14 @@ class HUDView {
     line(x, rowY + rowH - 2, x + w, rowY + rowH - 2);
     rowY += rowH;
 
-    // Show 4 interesting nodes (Alicia + startNode + current + others)
+    // Show 4 interesting nodes (Ana + startNode + current + others)
     int count = 0;
     textSize(largeTextMode ? 13 : 10);
     for (Node n : mission.nodes) {
       if (count >= 4) break;
       
       // Filter nodes to show relevant ones
-      if (n.name.equals("Alicia") || n.visited || n == mission.dijkstraPathfinder.currentNode) {
+      if (n.name.equals("Ana") || n.visited || n == mission.dijkstraPathfinder.currentNode) {
         fill(n == mission.dijkstraPathfinder.currentNode ? COL_GREEN : 255);
         text(n.name, x, rowY);
         
@@ -555,8 +555,8 @@ class HUDView {
     int mid = mission.missionID;
 
     if (mid == 1) {
-      steps = new String[]{"Rastrear", "Contener"};
-      currentStep = mission.missionPhase;   // 1 or 2
+      steps = new String[]{"Rastrear", "Completar"};
+      currentStep = mission.sourceFound ? 2 : 1;
     } else if (mid == 2) {
       steps = new String[]{"Elegir aliado", "Ruta calculada"};
       currentStep = (mission.dijkstraPath != null) ? 2 : 1;
@@ -674,43 +674,47 @@ class HUDView {
     int stage = (mid == 5) ? mission.missionStage : 0;
 
     if (mid == 1 || stage == 1) {
-      return "¡Rastreo Manual! Haz clic izquierdo en Alicia para iniciar. Luego, cliquea en orden el nodo que debe salir de la estructura (ver Cola/Pila arriba) para revelar a 'Ghost' (el agresor).";
+      if (!mission.traversal.isRunning()) {
+        return "¡Rastreo Manual! Haz clic izquierdo en ANA (Directora IT) para iniciar. Luego, sigue el orden del algoritmo clicando el siguiente nodo de la Cola/Pila para revelar a GHOST.";
+      } else {
+        return "Sigue clicando el siguiente nodo de la " + mission.traversalName + " estructura para revelar la red y encontrar a GHOST.";
+      }
     }
     if (mid == 2 || stage == 2) {
       if (!mission.dijkstraPathfinder.running) {
-        return "Haz clic izquierdo en un nodo aliado de apoyo (Bruno, Valeria o Sara) para iniciar Dijkstra.";
+        return "Haz clic izquierdo en un aliado (Bruno, Valeria o Sara) para iniciar Dijkstra y trazar el canal seguro hacia Ana.";
       } else {
         if (mission.dijkstraPathfinder.waitingForNodeSelection) {
-          return "Fase de Selección: Haz clic en el nodo no visitado que tenga la menor distancia tentativa (resaltado con flecha/círculo).";
+          return "Fase de Selecci\u00f3n: Haz clic en el nodo NO visitado con la MENOR distancia tentativa (ver tabla en panel derecho).";
         } else {
-          return "Fase de Relajación: Haz clic en cada uno de los vecinos del nodo actual para actualizar o relajar su distancia temporal.";
+          return "Fase de Relajaci\u00f3n: Haz clic en cada vecino del nodo actual para actualizar sus distancias temporales.";
         }
       }
     }
     if (mid == 3 || stage == 3) {
       if (!mission.kruskalMST.running) {
-        return "Haz clic en cualquier parte de la red para inicializar Kruskal.";
+        return "Haz clic en cualquier parte del grafo para que Kruskal proponga la primera arista candidata.";
       } else {
         if (mission.kruskalMST.waitingForDecision) {
-          return "Analizando arista candidata (amarilla intermitente). Haz clic en ACEPTAR (en el HUD) si conecta nodos sin formar ciclos, o RECHAZAR si crearía un bucle.";
+          return "Arista en amarillo propuesta. Haz clic en ACEPTAR si conecta equipos distintos (sin ciclo), o RECHAZAR si ya est\u00e1n conectados.";
         } else {
-          return "Procesando aristas...";
+          return "Procesando aristas... Por favor espera.";
         }
       }
     }
     if (mid == 4 || stage == 4) {
       if (mission.selectedStartNode == null) {
-        return "Haz clic izquierdo sobre el nodo FUENTE de los mensajes de acoso (ej. Ghost).";
+        return "Haz clic izquierdo sobre el nodo GHOST para establecerlo como FUENTE del ataque de exfiltraci\u00f3n.";
       } else if (mission.selectedEndNode == null) {
-        return "Haz clic izquierdo sobre el nodo DESTINO (ej. Alicia).";
+        return "Ahora haz clic izquierdo sobre ANA para establecerla como DESTINO (donde llegan los datos robados).";
       } else {
         if (mission.maxFlowCalculator.running) {
           if (mission.calculatedMaxFlow > 0) {
-            return "¡Flujo Máximo calculado! Los enlaces al límite de su capacidad están saturados (rojos). Haz clic derecho sobre ellos para aplicar cortafuegos (Corte Mínimo) y aislar a Ghost.";
+            return "\u00a1Flujo M\u00e1ximo calculado! Haz CLIC DERECHO en las aristas saturadas (rojo intenso) para aplicar el Corte M\u00ednimo y bloquear a GHOST.";
           }
-          return "Trazado Manual: Haz clic en la Fuente y luego avanza nodo a nodo vecino (con capacidad > 0) hasta llegar al Destino para trazar un camino de aumento.";
+          return "Trazado Manual: Haz clic en GHOST y avanza nodo a nodo (solo si capacidad residual > 0) hasta llegar a ANA.";
         } else {
-          return "Fuente y Destino listos. Haz clic izquierdo en la pantalla para iniciar el algoritmo manual de Ford-Fulkerson.";
+          return "Fuente y Destino listos. Haz clic en la pantalla para iniciar el trazado de caminos de aumento manualmente.";
         }
       }
     }

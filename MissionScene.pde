@@ -170,22 +170,18 @@ class MissionScene extends Scene {
     int stage = (mid == 5) ? missionStage : 0;
 
     if (mid == 1 || stage == 1) {
-      // Phase 1: highlight all clickable nodes, especially Alicia
-      if (missionPhase == 1) {
-        for (Node n : nodes) n.glowHint = true;
-      }
+      // Highlight Ana (starting node) and all others
+      for (Node n : nodes) n.glowHint = true;
     } else if (mid == 2 || stage == 2) {
-      // Highlight support nodes
+      // Highlight support allies: Bruno, Valeria, Sara
       for (Node n : nodes) {
         if (n.supportive || n.name.equals("Bruno") || n.name.equals("Sara") || n.name.equals("Valeria")) {
           n.glowHint = true;
         }
       }
     } else if (mid == 3 || stage == 3) {
-      // No specific node to click — hint on all nodes
       for (Node n : nodes) n.glowHint = true;
     } else if (mid == 4 || stage == 4) {
-      // No specific node to click — hint on all nodes
       for (Node n : nodes) n.glowHint = true;
     }
   }
@@ -199,31 +195,59 @@ class MissionScene extends Scene {
 
   void setupMissionNarrative() {
     if (missionID == 1) {
-      dialogueSystem.eva("¡Hola! Soy EVA, tu asistente de análisis de redes sociales.");
-      dialogueSystem.eva("Alicia ha recibido mensajes ofensivos y necesitamos encontrar el origen.");
-      dialogueSystem.eva("Inicia el rastreo haciendo clic izquierdo en Alicia, la víctima.");
-      dialogueSystem.eva("Luego, sigue el orden del algoritmo (ver Cola/Pila a la derecha) para revelar la red y encontrar a 'Ghost', la cuenta agresora.");
-      triggerAlert("RASTREAR ORIGEN");
+      // ── MISIÓN 1: Rastros del Hacker (BFS / DFS) ─────────────────────
+      dialogueSystem.eva("¡Alerta roja! Soy EVA, IA de seguridad de NexaCorp.");
+      dialogueSystem.eva("El hacker 'GHOST' ha penetrado nuestra red interna y acosa a los empleados con mensajes cifrados.");
+      dialogueSystem.eva("Tu misión: rastrear la red para descubrir por dónde entró GHOST.");
+      dialogueSystem.eva("Paso 1 — Haz clic izquierdo en ANA (Directora IT), la primera empleada afectada, para iniciar el rastreo.");
+      dialogueSystem.eva("Paso 2 — Observa la Cola/Pila en el panel derecho y haz clic en el siguiente nodo de la estructura para ir revelando la red.");
+      dialogueSystem.eva("Usa T para cambiar entre BFS (por niveles) y DFS (en profundidad). ¡Encuentra a GHOST!");
+      triggerAlert("OPERACIÓN: RASTREO DE HACKER");
     } else if (missionID == 2) {
-      dialogueSystem.eva("¡Buenas noticias! Ya identificamos al agresor.");
-      dialogueSystem.eva("Ahora Alicia necesita apoyo urgente, pero debemos encontrar la ruta con menor riesgo.");
-      dialogueSystem.eva("Haz clic en uno de los nodos que brillan — son los aliados de Alicia: Bruno, Valeria o Sara.");
-      triggerAlert("BUSCANDO RUTA SEGURA");
+      // ── MISIÓN 2: Canal Seguro (Dijkstra) ────────────────────────────
+      dialogueSystem.eva("¡Evidencia recolectada! Ya sabemos quién es GHOST.");
+      dialogueSystem.eva("Pero Ana sigue expuesta. Necesitamos enviarle instrucciones de seguridad por el canal de menor riesgo de interceptación.");
+      dialogueSystem.eva("Tu misión: usar Dijkstra para encontrar la ruta con menor peso acumulado hasta Ana.");
+      dialogueSystem.eva("Paso 1 — Haz clic izquierdo en uno de los aliados que brillan: Bruno, Valeria o Sara.");
+      dialogueSystem.eva("Paso 2 — Cuando Dijkstra te indique, haz clic en el nodo no visitado con la MENOR distancia tentativa.");
+      dialogueSystem.eva("Paso 3 — Luego haz clic en cada vecino del nodo actual para relajar sus distancias. ¡La ruta verde es el canal seguro!");
+      triggerAlert("OPERACIÓN: CANAL SEGURO");
     } else if (missionID == 3) {
-      dialogueSystem.eva("El acoso destruyó las conexiones de confianza entre los usuarios.");
-      dialogueSystem.eva("Necesitamos reconstruir la red con el menor costo posible.");
-      dialogueSystem.eva("Haz clic en cualquier lugar de la red para iniciar la reconstrucción.");
-      triggerAlert("RECONSTRUYENDO RED");
+      // ── MISIÓN 3: Reconstrucción de Red (Kruskal MST) ────────────────
+      dialogueSystem.eva("GHOST destruyó varios enlaces de comunicación al infiltrarse en NexaCorp.");
+      dialogueSystem.eva("La oficina está desconectada. ¡Debemos reconectar todos los equipos con el menor costo de infraestructura!");
+      dialogueSystem.eva("Tu misión: usar Kruskal para construir el Árbol de Expansión Mínima de la red.");
+      dialogueSystem.eva("Paso 1 — Haz clic en cualquier parte del grafo para que Kruskal proponga la primera arista candidata.");
+      dialogueSystem.eva("Paso 2 — Por cada arista propuesta (en amarillo), decide: ¿ACEPTAR o RECHAZAR?");
+      dialogueSystem.eva("Regla clave: ACEPTA si conecta equipos distintos. RECHAZA si ya están conectados (crearía un ciclo).");
+      triggerAlert("OPERACIÓN: RECONSTRUCCIÓN");
     } else if (missionID == 4) {
-      dialogueSystem.eva("Ghost está inundando la red con mensajes tóxicos.");
-      dialogueSystem.eva("Necesitamos calcular cuánto daño puede hacer para poder bloquearlo.");
-      dialogueSystem.eva("Haz clic en cualquier lugar para analizar el flujo de mensajes.");
-      triggerAlert("CALCULANDO FLUJO MÁXIMO");
+      // ── MISIÓN 4: Interceptar el Ataque (Ford-Fulkerson) ─────────────
+      dialogueSystem.eva("GHOST está exfiltrando datos confidenciales de NexaCorp por la red.");
+      dialogueSystem.eva("Necesitamos calcular cuántos datos puede robar para bloquear exactamente los canales correctos.");
+      dialogueSystem.eva("Tu misión: usar Ford-Fulkerson para hallar el flujo máximo de datos de GHOST.");
+      dialogueSystem.eva("Paso 1 — Haz clic izquierdo en el nodo GHOST para establecerlo como FUENTE del ataque.");
+      dialogueSystem.eva("Paso 2 — Haz clic izquierdo en ANA para establecerla como DESTINO (donde llegan los datos robados).");
+      dialogueSystem.eva("Paso 3 — Traza caminos de GHOST a ANA haciendo clic en nodos vecinos (solo si la capacidad residual > 0).");
+      dialogueSystem.eva("Cuando no haya más caminos, aplica el Corte Mínimo: haz CLIC DERECHO sobre las aristas saturadas (rojo intenso) para bloquearlas.");
+      triggerAlert("OPERACIÓN: INTERCEPTAR EXFILTRACIÓN");
     } else if (missionID == 5) {
-      dialogueSystem.eva("¡Misión final! Vas a usar todo lo que aprendiste.");
-      dialogueSystem.eva("Paso 1: Primero, rastrea la cuenta agresora usando BFS o DFS.");
-      dialogueSystem.eva("Haz clic en cualquier usuario para empezar. ¡Tú puedes!");
-      triggerAlert("MISIÓN FINAL: INTEGRACIÓN");
+      // ── MISIÓN 5: Caso Completo (Integración) ────────────────────────
+      dialogueSystem.eva("¡Operación Final — Neutralización de GHOST!");
+      // Read evidence collected from previous missions
+      if (game != null) {
+        String src = (game.evidence_m1_source.length() > 0) ? game.evidence_m1_source : "ruta desconocida";
+        String cost2 = (game.evidence_m2_routeCost > 0) ? str((int)game.evidence_m2_routeCost) : "N/A";
+        String cost3 = (game.evidence_m3_mstCost > 0)   ? str((int)game.evidence_m3_mstCost)   : "N/A";
+        String flow4 = (game.evidence_m4_maxFlow > 0)   ? str((int)game.evidence_m4_maxFlow)   : "N/A";
+        dialogueSystem.eva("[EVIDENCIA 1 - LOG DE TRÁFICO] GHOST entró por: " + src);
+        dialogueSystem.eva("[EVIDENCIA 2 - CANAL SEGURO] Costo de ruta segura hacia Ana: " + cost2 + " unidades de riesgo.");
+        dialogueSystem.eva("[EVIDENCIA 3 - MAPA DE RED] Costo mínimo de reconstrucción: " + cost3 + " unidades.");
+        dialogueSystem.eva("[EVIDENCIA 4 - VOLUMEN DEL ATAQUE] GHOST puede exfiltrar hasta " + flow4 + " unidades de datos.");
+      }
+      dialogueSystem.eva("Ahora ejecuta los 4 pasos en orden para neutralizarlo de una vez por todas.");
+      dialogueSystem.eva("Etapa 1 — Rastrea a GHOST con BFS o DFS. Haz clic en ANA para iniciar.");
+      triggerAlert("OPERACIÓN FINAL: GHOST NEUTRALIZADO");
     }
   }
 
@@ -232,29 +256,28 @@ class MissionScene extends Scene {
   // =========================
 
   void createNetwork() {
-    Node a = new Node(300, 250, "Alicia", "víctima");
-    Node b = new Node(550, 200, "Bruno", "apoyo");
-    Node c = new Node(700, 400, "Carla", "observadora");
-    Node d = new Node(450, 520, "Diego", "vulnerable");
-    Node e = new Node(850, 250, "Ghost", "agresor");
-    Node f = new Node(1000, 420, "Valeria", "apoyo");
-    Node g = new Node(1200, 300, "Andrés", "observador");
-    Node h = new Node(980, 580, "Sara", "apoyo");
+    // ── Nodos: empleados de NexaCorp + el hacker externo ─────────────────
+    Node a = new Node(300, 250, "Ana",    "dir_it");       // Directora IT — primera afectada
+    Node b = new Node(550, 200, "Bruno",  "analista");     // Analista Senior — aliado
+    Node c = new Node(700, 400, "Carla",  "contab");       // Contabilidad — observadora con logs
+    Node d = new Node(450, 520, "Diego",  "pasante");      // Pasante — credenciales débiles
+    Node e = new Node(850, 250, "GHOST",  "hacker");       // Hacker externo — nodo atacante
+    Node f = new Node(1000, 420, "Valeria", "rrhh");       // RRHH — aliada con datos de personal
+    Node g = new Node(1200, 300, "Andres", "servidor");    // Servidor Gateway — nodo de tráfico
+    Node h = new Node(980, 580, "Sara",   "legal");        // Legal — puede escalar el caso
 
-    // =========================
-    // STATES & VALUES
-    // =========================
-    e.infected = true;
-    e.toxicity = 100;
+    // ── Estados y valores ────────────────────────────────────────────────
+    e.infected   = true;
+    e.toxicity   = 100;
     d.vulnerable = true;
     f.supportive = true;
     h.supportive = true;
-    b.support = 90;
-    f.support = 95;
-    h.support = 95;
-    a.stress = 20;
-    d.stress = 60;
-    c.stress = 35;
+    b.support    = 90;
+    f.support    = 95;
+    h.support    = 95;
+    a.stress     = 20;
+    d.stress     = 60;
+    c.stress     = 35;
 
     nodes.add(a);
     nodes.add(b);
@@ -265,44 +288,44 @@ class MissionScene extends Scene {
     nodes.add(g);
     nodes.add(h);
 
-    // Build connections and set weights (Mission 2), costs (Mission 3), and capacities (Mission 4)
-    // Alicia - Bruno
+    // ── Conexiones: peso (M2 riesgo), costo (M3 infra), capacidad (M4 datos) ──
+    // Ana — Bruno
     Edge e_ab = connect(a, b);
     e_ab.weight = 2; e_ab.cost = 10; e_ab.capacity = 15;
 
-    // Bruno - Carla
+    // Bruno — Carla
     Edge e_bc = connect(b, c);
     e_bc.weight = 3; e_bc.cost = 18; e_bc.capacity = 10;
 
-    // Alicia - Diego
+    // Ana — Diego
     Edge e_ad = connect(a, d);
     e_ad.weight = 8; e_ad.cost = 35; e_ad.capacity = 5;
 
-    // Carla - Ghost
+    // Carla — GHOST
     Edge e_ce = connect(c, e);
     e_ce.weight = 9; e_ce.cost = 40; e_ce.capacity = 4;
 
-    // Bruno - Ghost
+    // Bruno — GHOST
     Edge e_be = connect(b, e);
     e_be.weight = 7; e_be.cost = 45; e_be.capacity = 12;
 
-    // Ghost - Valeria
+    // GHOST — Valeria
     Edge e_ef = connect(e, f);
     e_ef.weight = 5; e_ef.cost = 25; e_ef.capacity = 10;
 
-    // Valeria - Andrés
+    // Valeria — Andres
     Edge e_fg = connect(f, g);
     e_fg.weight = 4; e_fg.cost = 15; e_fg.capacity = 8;
 
-    // Diego - Sara
+    // Diego — Sara
     Edge e_dh = connect(d, h);
     e_dh.weight = 2; e_dh.cost = 12; e_dh.capacity = 10;
 
-    // Sara - Andrés
+    // Sara — Andres
     Edge e_hg = connect(h, g);
     e_hg.weight = 6; e_hg.cost = 22; e_hg.capacity = 6;
 
-    // Carla - Sara
+    // Carla — Sara
     Edge e_ch = connect(c, h);
     e_ch.weight = 5; e_ch.cost = 20; e_ch.capacity = 8;
   }
@@ -425,9 +448,9 @@ class MissionScene extends Scene {
 
         if (justFinished) {
           if (missionID == 5 && missionStage == 4) {
-            dialogueSystem.eva("¡Flujo máximo calculado! El ataque de Ghost tiene un caudal de " + (int)calculatedMaxFlow + " unidades.");
-            dialogueSystem.eva("Los enlaces saturados (capacidad llena) forman el 'Corte Mínimo' de la red.");
-            dialogueSystem.eva("¡Haz clic derecho sobre cada enlace saturado para bloquearlo y salvar a Alicia!");
+            dialogueSystem.eva("\u00a1Flujo m\u00e1ximo calculado! GHOST puede exfiltrar " + (int)calculatedMaxFlow + " unidades de datos.");
+            dialogueSystem.eva("Los enlaces saturados forman el 'Corte M\u00ednimo' — los cuellos de botella del ataque.");
+            dialogueSystem.eva("\u00a1Haz CLIC DERECHO sobre cada enlace saturado para bloquearlo y neutralizar a GHOST!");
           }
         }
       }
@@ -437,66 +460,110 @@ class MissionScene extends Scene {
     // MISSION SPECIFIC COMPLETION AND FLOW LOGIC
     // ==========================================
 
-    // --- MISSION 1: Tracing Only ---
+    // --- MISSION 1: Rastreo del Hacker (solo descubrir GHOST) ---
     if (missionID == 1) {
       if (!sourceFound) {
-        Node ghost = getNode("Ghost");
+        Node ghost = getNode("GHOST");
         if (ghost != null && ghost.visited) {
           sourceFound = true;
           missionComplete = true;
-          dialogueSystem.eva("¡Excelente! Has rastreado los mensajes de acoso y descubierto el origen: 'Ghost' es la cuenta agresora.");
-          dialogueSystem.eva("¡Misión 1 completada con éxito! Has identificado al culpable.");
+          // Guardar evidencia M1: qué nodo reveló a GHOST directamente
+          if (game != null) {
+            // Buscar el predecesor de GHOST en el recorrido
+            String entry = "acceso directo";
+            if (traversalName.equals("BFS") && bfsTraversal.visitedNodes != null) {
+              int idx = bfsTraversal.visitedNodes.indexOf(ghost);
+              if (idx > 0) entry = bfsTraversal.visitedNodes.get(idx - 1).name;
+            } else if (traversalName.equals("DFS") && dfsTraversal.visitedNodes != null) {
+              int idx = dfsTraversal.visitedNodes.indexOf(ghost);
+              if (idx > 0) entry = dfsTraversal.visitedNodes.get(idx - 1).name;
+            }
+            game.evidence_m1_source = entry + " → GHOST";
+          }
+          dialogueSystem.eva("¡INTRUSIÓN LOCALIZADA! GHOST fue rastreado en la red de NexaCorp.");
+          dialogueSystem.eva("Evidencia 1 guardada: Log de tráfico de entrada del hacker.");
+          dialogueSystem.eva("¡Misión 1 completada! Regresa al menú para continuar con la Misión 2.");
         }
       }
     }
 
-    // --- MISSION 2: Safest path (Dijkstra) ---
+    // --- MISSION 2: Canal Seguro (Dijkstra) ---
     else if (missionID == 2) {
       if (dijkstraPath != null && !missionComplete) {
         missionComplete = true;
+        // Guardar evidencia M2: costo total de la ruta más segura
+        if (game != null && dijkstraPath.size() > 0) {
+          Node dest = dijkstraPath.get(dijkstraPath.size() - 1);
+          if (dest != null && dest.dijkstraDist < Float.MAX_VALUE) {
+            game.evidence_m2_routeCost = dest.dijkstraDist;
+          }
+        }
+        dialogueSystem.eva("¡Canal seguro establecido hacia Ana!");
+        dialogueSystem.eva("Evidencia 2 guardada: Ruta de comunicación protegida.");
       }
     }
 
-    // --- MISSION 3: Kruskal MST ---
+    // --- MISSION 3: Reconstrucción de Red (Kruskal MST) ---
     else if (missionID == 3) {
       if (mstCost > 0 && !missionComplete) {
         missionComplete = true;
+        // Guardar evidencia M3: costo total del MST
+        if (game != null) {
+          game.evidence_m3_mstCost = mstCost;
+        }
+        dialogueSystem.eva("¡Red de NexaCorp reconstruida con costo mínimo!");
+        dialogueSystem.eva("Evidencia 3 guardada: Mapa de infraestructura segura.");
       }
     }
 
-    // --- MISSION 4: Ford-Fulkerson Max Flow ---
+    // --- MISSION 4: Interceptar Exfiltración (Ford-Fulkerson) ---
     else if (missionID == 4) {
       if (calculatedMaxFlow > 0 && !missionComplete) {
-        missionComplete = true;
+        // Check if all saturated edges are blocked (Min-Cut applied)
+        boolean allSaturatedBlocked = true;
+        int satCount = 0;
+        for (Edge e : edges) {
+          if (e.capacity > 0 && abs(e.flow - e.capacity) < 0.01) {
+            satCount++;
+            if (!e.blocked) allSaturatedBlocked = false;
+          }
+        }
+        if (satCount == 0 || allSaturatedBlocked) {
+          missionComplete = true;
+          // Guardar evidencia M4: flujo máximo calculado
+          if (game != null) {
+            game.evidence_m4_maxFlow = calculatedMaxFlow;
+          }
+          dialogueSystem.eva("¡Corte Mínimo aplicado! Los canales de exfiltración de GHOST están bloqueados.");
+          dialogueSystem.eva("Evidencia 4 guardada: Volumen máximo del ataque interceptado.");
+        }
       }
     }
 
-    // --- MISSION 5: Integration (Sequential Stages) ---
+    // --- MISSION 5: Integración Completa (Secuencial) ---
     else if (missionID == 5) {
       if (missionStage == 1) {
         if (!sourceFound) {
-          Node ghost = getNode("Ghost");
+          Node ghost = getNode("GHOST");
           if (ghost != null && ghost.visited) {
             sourceFound = true;
-            dialogueSystem.eva("Fase 1 completada: Ghost rastreado.");
-            delayNarrative("Fase 2: Encuentra la ruta más segura desde Valeria hasta Alicia.", 120);
-            delayNarrative("Haz clic izquierdo en Valeria para ejecutar Dijkstra.", 240);
+            dialogueSystem.eva("✅ Etapa 1 completada: GHOST rastreado en la red de NexaCorp.");
+            delayNarrative("Etapa 2 — Canal Seguro: Haz clic en Bruno, Valeria o Sara para enviar asistencia a Ana con Dijkstra.", 120);
             missionStage = 2;
+            setupGlowHints();
           }
         }
       } else if (missionStage == 2) {
         if (dijkstraPath != null) {
-          dialogueSystem.eva("¡Paso 2 completado! La ruta segura está trazada.");
-          dialogueSystem.eva("Paso 3: Ahora reconstruiremos las conexiones de confianza de la red.");
-          dialogueSystem.eva("Haz clic en cualquier lugar para reconstruir. ¡Ya casi terminamos!");
+          dialogueSystem.eva("✅ Etapa 2 completada: Canal seguro hacia Ana trazado.");
+          dialogueSystem.eva("Etapa 3 — Reconstrucción: Haz clic en cualquier parte del grafo para iniciar Kruskal.");
           missionStage = 3;
           setupGlowHints();
         }
       } else if (missionStage == 3) {
         if (mstCost > 0) {
-          dialogueSystem.eva("¡Paso 3 completado! Red reconstruida con costo " + (int)mstCost + ".");
-          dialogueSystem.eva("Último paso: Analiza el flujo de mensajes tóxicos de Ghost.");
-          dialogueSystem.eva("Haz clic en cualquier lugar para el análisis final. ¡Tú puedes!");
+          dialogueSystem.eva("✅ Etapa 3 completada: Red reconstruida con costo " + (int)mstCost + " unidades.");
+          dialogueSystem.eva("Etapa 4 — Interceptar Exfiltración: Haz clic en GHOST (fuente) y luego en ANA (destino) para analizar el flujo.");
           missionStage = 4;
           setupGlowHints();
         }
@@ -507,13 +574,13 @@ class MissionScene extends Scene {
           for (Edge e : edges) {
             if (e.capacity > 0 && abs(e.flow - e.capacity) < 0.01) {
               satCount++;
-              if (!e.blocked) {
-                allSaturatedBlocked = false;
-              }
+              if (!e.blocked) allSaturatedBlocked = false;
             }
           }
           if (satCount > 0 && allSaturatedBlocked) {
             missionComplete = true;
+            dialogueSystem.eva("✅ Etapa 4 completada: Exfiltración de GHOST bloqueada.");
+            dialogueSystem.eva("¡MISIÓN FINAL COMPLETADA! NexaCorp ha sido asegurada. GHOST neutralizado.");
           }
         }
       }
@@ -648,25 +715,25 @@ class MissionScene extends Scene {
     String realWorld = "";
 
     if (missionID == 1) {
-      concept = "BFS y DFS (Búsqueda en Grafos)\nBFS (Búsqueda en Anchura) explora una red por niveles, expandiéndose uniformemente en círculos concéntricos desde el origen. DFS (Búsqueda en Profundidad) avanza por un camino hasta el extremo final antes de retroceder.";
-      realWorld = "En redes sociales, BFS sirve para analizar el alcance viral instantáneo por contactos directos, mientras que DFS permite rastrear cadenas profundas de reenvíos o hilos específicos.";
-      gamePlay = "1. Haz clic izquierdo en Alicia para comenzar a rastrear desde ella.\n2. EVA ejecutará el recorrido para rastrear el origen 'Ghost'.\n3. Bloquea enlaces haciendo Clic Derecho sobre los cables rojos para detener la toxicidad.";
+      concept = "BFS y DFS (Búsqueda en Grafos)\nBFS (Búsqueda en Anchura) explora la red por niveles desde el nodo inicial. DFS (Búsqueda en Profundidad) sigue una ruta hasta el fondo antes de retroceder.";
+      realWorld = "Los analistas de ciberseguridad usan BFS para mapear la propagación de un malware por niveles, y DFS para rastrear cadenas de comunicación profundas en una red corporativa.";
+      gamePlay = "1. Haz clic izquierdo en ANA (Directora IT) para iniciar el rastreo.\n2. Sigue el orden de la Cola (BFS) o Pila (DFS) — haz clic en el siguiente nodo de la estructura.\n3. Cuando descubras a GHOST, la misión se completará.";
     } else if (missionID == 2) {
-      concept = "Camino Corto (Dijkstra)\nEncuentra la ruta de menor costo acumulado entre un nodo inicial y los demás. Funciona seleccionando progresivamente el nodo no visitado con la distancia más corta y relajando sus vecinos.";
-      realWorld = "Se usa en GPS y enrutamiento web para encontrar el camino más rápido o con menos tráfico entre dos servidores.";
-      gamePlay = "1. Selecciona a un aliado (nodo de apoyo brillante: Bruno, Valeria o Sara).\n2. El algoritmo Dijkstra calculará la ruta con menor stress acumulado hacia Alicia.\n3. La ruta se iluminará en color verde en la pantalla.";
+      concept = "Camino Mínimo (Dijkstra)\nEncuentra la ruta de menor costo acumulado entre dos nodos de la red. Funciona eligiendo progresivamente el nodo no visitado con la distancia tentativa más baja y relajando a sus vecinos.";
+      realWorld = "Se usa en ciberseguridad para enrutar tráfico de forma segura, y en redes corporativas para seleccionar el canal de menor riesgo de intercepción.";
+      gamePlay = "1. Haz clic en Bruno, Valeria o Sara (aliados de Ana).\n2. En Fase de Selección: elige el nodo no visitado con menor distancia tentativa.\n3. En Fase de Relajación: haz clic en cada vecino del nodo actual para actualizar sus distancias.";
     } else if (missionID == 3) {
-      concept = "Árbol de Expansión Mínima (MST - Kruskal)\nConecta todos los nodos de un grafo sin crear ciclos, minimizando la suma total del costo de los enlaces seleccionados.";
-      realWorld = "Ideal para diseñar redes eléctricas, fibra óptica o acueductos, conectando ciudades completas con el mínimo gasto en infraestructura.";
-      gamePlay = "1. Haz clic en la pantalla para iniciar la reconstrucción.\n2. Kruskal ordenará las conexiones por costo social y las irá evaluando.\n3. Las conexiones que creen bucles (ciclos) serán rechazadas automáticamente.";
+      concept = "Árbol de Expansión Mínima (Kruskal MST)\nConecta todos los nodos sin crear ciclos, usando el menor costo total de infraestructura. Evalua aristas en orden ascendente de costo.";
+      realWorld = "Ideal para diseñar redes de fibra óptica corporativas, garantizando conectividad completa con el mínimo gasto en cables e infraestructura.";
+      gamePlay = "1. Haz clic en el grafo para iniciar Kruskal.\n2. Por cada arista propuesta (amarilla), decide: ACEPTAR si conecta equipos distintos, RECHAZAR si ya están conectados (ciclo).\n3. Al finalizar, todos los equipos de NexaCorp estarán reconectados.";
     } else if (missionID == 4) {
-      concept = "Flujo Máximo (Ford-Fulkerson)\nCalcula el flujo máximo de información o material que puede enviarse a través de una red desde una fuente hasta un sumidero, respetando las capacidades de cada canal.";
-      realWorld = "Usado para dimensionar tuberías de petróleo, tráfico en autopistas o ancho de banda de internet.";
-      gamePlay = "1. Haz clic en la pantalla para analizar el flujo máximo.\n2. El algoritmo encontrará caminos de aumento desde Ghost (origen) hasta Alicia (destino).\n3. Esto nos dirá el ancho de banda del acoso para poder bloquearlo efectivamente.";
+      concept = "Flujo Máximo (Ford-Fulkerson)\nCalcula la cantidad máxima de datos que puede enviarse de una fuente a un destino, respetando las capacidades de cada canal. El Corte Mínimo son los cuellos de botella que limitan el flujo total.";
+      realWorld = "Se usa para dimensionar el ancho de banda de una red empresarial y para identificar los enlaces críticos que, si se cortan, aislarían la fuente del destino.";
+      gamePlay = "1. Haz clic en GHOST (fuente) y luego en ANA (destino).\n2. Traza caminos de aumento haciendo clic nodo a nodo.\n3. Cuando no haya más caminos, usa CLIC DERECHO en las aristas saturadas para aplicar el Corte Mínimo.";
     } else if (missionID == 5) {
-      concept = "Fase de Integración Total\nCombina todos los conceptos anteriores. Deberás completar secuencialmente las 4 misiones para sanar la red por completo.";
-      realWorld = "En el mundo profesional, la seguridad de una red involucra múltiples fases: rastrear la intrusión, encontrar rutas seguras, reconstruir y limitar el daño.";
-      gamePlay = "Sigue las instrucciones del HUD y de EVA. Cada etapa activa un algoritmo distinto. ¡Salva la red y obtén el puntaje más alto!";
+      concept = "Integración de Ciberseguridad\nCombina rastreo (BFS/DFS), canal seguro (Dijkstra), reconstrucción de red (Kruskal) y control de flujo (Ford-Fulkerson) en una operación completa de respuesta a incidentes.";
+      realWorld = "Un equipo SOC (Security Operations Center) sigue exactamente estos pasos para responder a una intrusión real: rastrear, proteger, reconstruir y cortar el acceso al atacante.";
+      gamePlay = "Sigue las 4 etapas en orden guiado por EVA. Cada etapa activa un algoritmo distinto. Usa las evidencias de las misiones anteriores para reforzar el caso contra GHOST.";
     }
 
     // Draw manual content cards
@@ -816,36 +883,16 @@ class MissionScene extends Scene {
   // PHASE TRANSITION (Mission 1)
   // =========================
 
+  // Fase 2 de Misión 1 (infección/contención) eliminada por diseño pedagógico.
+  // La Misión 1 termina al descubrir a GHOST — sin segunda fase.
+  // startPhaseTransition() ya no tiene uso; se mantiene para compatibilidad
+  // con MissionController que puede llamarla, pero no activa la infección.
   void startPhaseTransition() {
-    transitioningPhase = true;
-    transitionTimer = 0;
-    cinematicText = "ORIGEN DEL ACOSO IDENTIFICADO";
-    dialogueSystem.alert("La cuenta agresora fue encontrada.");
+    // No-op: Misión 1 ya no tiene Fase 2
   }
 
   void updatePhaseTransition() {
-    if (!transitioningPhase) return;
-    transitionTimer++;
-    cinematicFade = min(cinematicFade + 3, 180);
-
-    if (transitionTimer == 120) {
-      missionPhase = 2;
-      containmentTimer = 0;
-      infectionSystem.setActive(true);
-
-      dialogueSystem.eva("¡Bien hecho! Ahora viene la parte difícil.");
-      dialogueSystem.eva("Ghost está propagando el acoso por la red. ¡Debemos detenerlo!");
-      dialogueSystem.eva("Haz CLIC DERECHO sobre las líneas rojas para bloquear las conexiones dañinas. ¡Protege a los usuarios!");
-      triggerAlert("FASE 2 — CONTENCIÓN");
-
-      // Clear node hints since now the action is on edges
-      clearGlowHints();
-    }
-
-    if (transitionTimer > 240) {
-      transitioningPhase = false;
-      cinematicFade = 0;
-    }
+    // No-op: eliminada la mecánica de propagación en Misión 1
   }
 
   // =========================
@@ -883,21 +930,15 @@ class MissionScene extends Scene {
     textSize(24);
 
     if (missionID == 5) {
-      text("MISIÓN FINAL — FASE DE INTEGRACIÓN (ETAPA " + missionStage + "/4)", width/2, 100);
-    } else {
-      if (missionID == 1) {
-        if (missionPhase == 1) {
-          text("FASE 1 — RASTREO DEL ACOSO", width/2, 100);
-        } else {
-          text("FASE 2 — CONTENCIÓN", width/2, 100);
-        }
-      } else if (missionID == 2) {
-        text("MISIÓN 2 — DETECCIÓN DE LA RUTA SEGURA", width/2, 100);
-      } else if (missionID == 3) {
-        text("MISIÓN 3 — RECONSTRUIR VÍNCULOS (MST)", width/2, 100);
-      } else if (missionID == 4) {
-        text("MISIÓN 4 — CONTROL DE CAPACIDAD DE ACOSO", width/2, 100);
-      }
+      text("OPERACIÓN FINAL — NEXACORP BAJO ATAQUE (ETAPA " + missionStage + "/4)", width/2, 100);
+    } else if (missionID == 1) {
+      text("MISIÓN 1 — RASTREO DEL HACKER (BFS / DFS)", width/2, 100);
+    } else if (missionID == 2) {
+      text("MISIÓN 2 — CANAL SEGURO (DIJKSTRA)", width/2, 100);
+    } else if (missionID == 3) {
+      text("MISIÓN 3 — RECONSTRUCCIÓN DE RED (KRUSKAL)", width/2, 100);
+    } else if (missionID == 4) {
+      text("MISIÓN 4 — INTERCEPTAR EXFILTRACIÓN (FORD-FULKERSON)", width/2, 100);
     }
   }
 
@@ -910,32 +951,42 @@ class MissionScene extends Scene {
 
     if (missionComplete) {
       fill(0, 255, 120);
-      textSize(56);
-      text("RED ESTABILIZADA", width/2, height/2 - 90);
+      textSize(48);
+
+      String headline = "MISIÓN COMPLETADA";
+      String subtitle = "";
+      if (missionID == 1) {
+        headline = "HACKER RASTREADO";
+        subtitle = "Evidencia 1 recolectada: Log de tráfico de GHOST guardado.";
+      } else if (missionID == 2) {
+        headline = "CANAL SEGURO ESTABLECIDO";
+        subtitle = "Evidencia 2 recolectada: Ruta de menor riesgo hacia Ana asegurada.";
+      } else if (missionID == 3) {
+        headline = "RED RECONSTRUIDA";
+        subtitle = "Evidencia 3 recolectada: Infraestructura mínima de NexaCorp restaurada.";
+      } else if (missionID == 4) {
+        headline = "EXFILTRACIÓN BLOQUEADA";
+        subtitle = "Evidencia 4 recolectada: Canales de robo de datos de GHOST cerrados.";
+      } else if (missionID == 5) {
+        headline = "¡GHOST NEUTRALIZADO!";
+        subtitle = "¡Operación completa! NexaCorp ha sido asegurada. ¡Eres el héroe de la empresa!";
+      }
+
+      text(headline, width/2, height/2 - 90);
 
       fill(255);
       textSize(22);
-      text("Puntaje Final: " + int(score) + " pts", width/2, height/2 - 35);
+      text("Puntaje Final: " + int(score) + " pts", width/2, height/2 - 40);
 
       textSize(16);
       fill(200);
-      if (missionID == 1) {
-        text("La propagación principal fue detenida temporalmente.", width/2, height/2 - 5);
-      } else if (missionID == 2) {
-        text("Ruta más segura identificada y asegurada hacia la víctima.", width/2, height/2 - 5);
-      } else if (missionID == 3) {
-        text("La red fue reconstruida con éxito al menor costo social possible.", width/2, height/2 - 5);
-      } else if (missionID == 4) {
-        text("El flujo tóxico máximo ha sido acotado e interceptado.", width/2, height/2 - 5);
-      } else if (missionID == 5) {
-        text("¡Felicidades! Has integrado todos los algoritmos y saneado la red por completo.", width/2, height/2 - 5);
-      }
+      text(subtitle, width/2, height/2 - 5);
 
       // Initials input
       if (!initialsSaved) {
         fill(0, 255, 255);
         textSize(18);
-        text("🏆 ¡NUEVO RÉCORD DE LA FERIA!", width/2, height/2 + 40);
+        text("🏆 ¡NUEVO RÉCORD — FERIA DE CIENCIAS NEXACORP!", width/2, height/2 + 40);
         fill(255);
         text("Ingresa tus iniciales (3 letras): " + playerInitials + ((frameCount / 20) % 2 == 0 ? "_" : ""), width/2, height/2 + 70);
         textSize(13);
@@ -944,16 +995,18 @@ class MissionScene extends Scene {
       } else {
         fill(0, 255, 120);
         textSize(18);
-        text("¡Puntaje guardado con éxito en el Leaderboard!", width/2, height/2 + 45);
+        text("¡Puntaje guardado con éxito en el ranking!", width/2, height/2 + 45);
       }
     } else {
       fill(255, 60, 80);
-      textSize(56);
-      text("RED COLAPSADA", width/2, height/2 - 40);
-
+      textSize(48);
+      text("SISTEMA COMPROMETIDO", width/2, height/2 - 40);
       fill(255);
-      textSize(22);
-      text("Demasiados usuarios fueron afectados por la toxicidad.", width/2, height/2 + 30);
+      textSize(20);
+      text("GHOST logró comprometer la red de NexaCorp.", width/2, height/2 + 20);
+      fill(180);
+      textSize(16);
+      text("Reinicia para volver a intentarlo.", width/2, height/2 + 50);
     }
 
     fill(180);
@@ -1025,17 +1078,31 @@ class MissionScene extends Scene {
     int stage = (mid == 5) ? missionStage : 0;
 
     if (mid == 1 || stage == 1) {
-      if (missionPhase == 1) {
-        return "¿No estás seguro? Haz clic en cualquiera de los nodos que brillan para empezar a rastrear la red. ¡Prueba con Alicia!";
-      } else {
-        return "¡Rápido! Haz clic derecho en las líneas rojas para bloquear la propagación del acoso antes de que sea tarde.";
-      }
+      return "Pista: Haz clic izquierdo en ANA (Directora IT) para iniciar el rastreo. Luego sigue el orden de la Cola/Pila en el panel derecho para revelar a GHOST.";
     } else if (mid == 2 || stage == 2) {
-      return "Busca los nodos que brillan — son Bruno, Valeria y Sara. Haz clic en uno de ellos para encontrar la ruta más segura hacia Alicia.";
+      if (!dijkstraPathfinder.running) {
+        return "Pista: Haz clic en uno de los aliados que brillan — Bruno, Valeria o Sara — para trazar el canal seguro hacia Ana con Dijkstra.";
+      } else if (dijkstraPathfinder.waitingForNodeSelection) {
+        return "Pista: Selecciona el nodo no visitado con la MENOR distancia tentativa en la tabla Dijkstra del panel derecho.";
+      } else {
+        return "Pista: Haz clic en cada vecino del nodo actual (destacado) para relajar sus distancias y avanzar el algoritmo.";
+      }
     } else if (mid == 3 || stage == 3) {
-      return "Haz clic en cualquier lugar de la red para reconstruir las conexiones. El sistema encontrará la mejor forma de reconectar a todos.";
+      if (!kruskalMST.running) {
+        return "Pista: Haz clic en cualquier parte del grafo para iniciar Kruskal y comenzar a reconstruir la red de NexaCorp.";
+      } else if (kruskalMST.waitingForDecision) {
+        return "Pista: Mira la arista amarilla propuesta. Si conecta equipos distintos → ACEPTAR. Si crearía un bucle (ya conectados) → RECHAZAR.";
+      }
     } else if (mid == 4 || stage == 4) {
-      return "Haz clic en cualquier lugar para analizar el flujo de mensajes tóxicos. Descubriremos cuánto daño puede hacer Ghost.";
+      if (selectedStartNode == null) {
+        return "Pista: Haz clic en el nodo GHOST para establecerlo como FUENTE del ataque de exfiltración.";
+      } else if (selectedEndNode == null) {
+        return "Pista: Ahora haz clic en ANA para establecerla como DESTINO de los datos robados.";
+      } else if (calculatedMaxFlow > 0) {
+        return "Pista: Los canales saturados (rojo intenso) forman el Corte Mínimo. Haz CLIC DERECHO sobre ellos para bloquear a GHOST.";
+      } else {
+        return "Pista: Traza un camino de GHOST a ANA haciendo clic nodo por nodo (solo por canales con capacidad > 0).";
+      }
     }
     return null;
   }

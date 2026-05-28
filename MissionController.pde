@@ -11,12 +11,8 @@ class MissionController {
   }
 
   void updateMissionFlow() {
-    // Mission 1 Phase Transition
-    if (mission.missionID == 1) {
-      if (mission.sourceFound && mission.missionPhase == 1 && !mission.transitioningPhase) {
-        mission.startPhaseTransition();
-      }
-    }
+    // Misión 1 termina al descubrir a GHOST — no hay Fase 2 de contención.
+    // La lógica de finalización está completamente en MissionScene.update()
   }
 
   void mousePressed(float mx, float my, int button) {
@@ -44,17 +40,17 @@ class MissionController {
 
         if (clickedNode != null) {
           if (!mission.traversal.isRunning()) {
-            if (clickedNode.name.equals("Alicia")) {
+            if (clickedNode.name.equals("Ana")) {
               mission.selectedNode = clickedNode;
               mission.traversal.reset();
               mission.traversal.start(clickedNode);
               mission.clearGlowHints();
-              mission.dialogueSystem.eva("Rastreo iniciado desde Alicia. Sigue el orden del algoritmo (mira la Cola/Pila a la derecha).");
+              mission.dialogueSystem.eva("Rastreo iniciado desde Ana. Sigue el orden del algoritmo (mira la Cola/Pila a la derecha).");
               soundManager.playSelect();
             } else {
               mission.score = max(0, mission.score - 100);
               soundManager.playError();
-              mission.dialogueSystem.eva("Debes iniciar la investigación haciendo clic en Alicia, la víctima (-100 pts).");
+              mission.dialogueSystem.eva("Debes iniciar la investigaci\u00f3n desde ANA, la Directora IT afectada (-100 pts).");
             }
           } else {
             Node expectedNode = null;
@@ -71,8 +67,8 @@ class MissionController {
             if (expectedNode != null) {
               if (clickedNode == expectedNode) {
                 soundManager.playSuccess();
-                mission.dialogueSystem.say(clickedNode.x, clickedNode.y - 60, "Revelando " + clickedNode.name);
-                mission.messageLog.add("EVA", clickedNode.name, "Escaneando " + clickedNode.name, 2);
+                mission.dialogueSystem.say(clickedNode.x, clickedNode.y - 60, "Revelando: " + clickedNode.name);
+                mission.messageLog.add("EVA", clickedNode.name, "Escaneando nodo " + clickedNode.name, 2);
 
                 if (mission.traversalName.equals("BFS")) {
                   mission.bfsTraversal.stepRequested = true;
@@ -82,20 +78,20 @@ class MissionController {
                   mission.dfsTraversal.update();
                 }
 
-                if (clickedNode.name.equals("Ghost")) {
+                if (clickedNode.name.equals("GHOST")) {
                   soundManager.playSuccess();
-                  mission.dialogueSystem.eva("¡ALERTA! Has revelado a 'Ghost', el origen del acoso.");
-                  mission.messageLog.add("ALERTA", "Ghost", "Origen detectado", 0);
+                  mission.dialogueSystem.eva("\u00a1ALERTA! Has encontrado a 'GHOST', el hacker que infiltr\u00f3 NexaCorp.");
+                  mission.messageLog.add("ALERTA", "GHOST", "Intruso localizado", 0);
                   if (mid == 1) {
                     mission.sourceFound = true;
                   }
                 } else {
-                  mission.dialogueSystem.eva("Nodo " + clickedNode.name + " escaneado. Sigue con el siguiente de la estructura.");
+                  mission.dialogueSystem.eva("Nodo " + clickedNode.name + " escaneado. Sigue con el siguiente de la estructura " + mission.traversalName + ".");
                 }
               } else {
                 mission.score = max(0, mission.score - 150);
                 soundManager.playError();
-                mission.dialogueSystem.eva("¡Error de orden! " + clickedNode.name + " no es el siguiente en la estructura de " + mission.traversalName + " (-150 pts).");
+                mission.dialogueSystem.eva("\u00a1Error de orden! " + clickedNode.name + " no es el siguiente en la estructura de " + mission.traversalName + " (-150 pts).");
               }
             } else {
               mission.dialogueSystem.eva("El recorrido ya ha finalizado.");
@@ -139,21 +135,21 @@ class MissionController {
           }
 
           if (clickedNode.supportive || clickedNode.name.equals("Bruno") || clickedNode.name.equals("Sara") || clickedNode.name.equals("Valeria")) {
-            mission.dialogueSystem.say(clickedNode.x, clickedNode.y - 60, "Iniciando Dijkstra...");
+            mission.dialogueSystem.say(clickedNode.x, clickedNode.y - 60, "Dijkstra desde " + clickedNode.name + "...");
             mission.clearGlowHints();
 
-            Node alicia = mission.getNode("Alicia");
-            if (alicia != null) {
+            Node ana = mission.getNode("Ana");
+            if (ana != null) {
               mission.dijkstraPath = null;
-              mission.dijkstraPathfinder.startStepByStep(clickedNode, alicia);
-              mission.dialogueSystem.eva("¡Dijkstra iniciado! Selecciona el nodo con menor distancia tentativa (" + clickedNode.name + ").");
-              mission.messageLog.add("DIJKSTRA", "Alicia", "Búsqueda de ruta segura desde " + clickedNode.name, 1);
+              mission.dijkstraPathfinder.startStepByStep(clickedNode, ana);
+              mission.dialogueSystem.eva("¡Dijkstra iniciado desde " + clickedNode.name + "! Busca el nodo con menor distancia tentativa en la tabla del panel derecho.");
+              mission.messageLog.add("DIJKSTRA", "Ana", "Buscando canal seguro desde " + clickedNode.name, 1);
               soundManager.playSelect();
             }
           } else {
             mission.score = max(0, mission.score - 200);
             soundManager.playError();
-            mission.dialogueSystem.eva(clickedNode.name + " no es un aliado de apoyo brillante (-200 pts).");
+            mission.dialogueSystem.eva(clickedNode.name + " no es un aliado de apoyo disponible (-200 pts). Haz clic en Bruno, Valeria o Sara.");
           }
           return;
         } else {

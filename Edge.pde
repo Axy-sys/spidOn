@@ -22,10 +22,10 @@ class Edge {
       MissionScene ms = (MissionScene) game.sceneManager.currentScene;
       if (ms.missionID == 1 || (ms.missionID == 5 && ms.missionStage == 1)) {
         boolean aVisible = ms.traversal.getVisitedNodes().contains(a) ||
-                           a.name.equals("Alicia") ||
+                           a.name.equals("Ana") ||
                            (ms.traversalName.equals("BFS") ? ms.bfsTraversal.queue.contains(a) : ms.dfsTraversal.stack.contains(a));
         boolean bVisible = ms.traversal.getVisitedNodes().contains(b) ||
-                           b.name.equals("Alicia") ||
+                           b.name.equals("Ana") ||
                            (ms.traversalName.equals("BFS") ? ms.bfsTraversal.queue.contains(b) : ms.dfsTraversal.stack.contains(b));
         if (!aVisible || !bVisible) {
           return; // Skip rendering
