@@ -195,12 +195,13 @@ class DijkstraPathfinder {
           }
         }
       } else {
-        soundManager.playError();
         if (game.sceneManager.currentScene instanceof MissionScene) {
           MissionScene ms = (MissionScene) game.sceneManager.currentScene;
           ms.score = max(0, ms.score - 150);
+          ms.loseShield();
           ms.dialogueSystem.eva("¡Incorrecto! Debes seleccionar el nodo no visitado con menor distancia tentativa: " + expectedMinNode.name + " (-150 pts).");
-          ms.triggerAlert("-150 PENALIZACIÓN");
+        } else {
+          soundManager.playError();
         }
       }
     } else if (waitingForRelaxations) {

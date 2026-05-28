@@ -38,6 +38,11 @@ class MissionScene extends Scene {
   Node selectedStartNode = null;
   Node selectedEndNode = null;
 
+  int shields = 3;
+  float threatLevel = 0.0f;
+  int ghostActionTimer = 0;
+  int ghostActionInterval = 480;
+
   boolean sourceFound = false;
 
   int containmentTimer = 0;
@@ -104,6 +109,18 @@ class MissionScene extends Scene {
     dijkstraPath = null;
     mstCost = 0;
     calculatedMaxFlow = 0;
+
+    shields = 3;
+    threatLevel = 0.0f;
+    ghostActionTimer = 0;
+    if (missionID == 1) ghostActionInterval = 8 * 60;
+    else if (missionID == 2) ghostActionInterval = 10 * 60;
+    else if (missionID == 3) ghostActionInterval = 12 * 60;
+    else if (missionID == 4) ghostActionInterval = 8 * 60;
+    else if (missionID == 5) ghostActionInterval = 8 * 60;
+
+    soundManager.playMissionStart();
+    soundManager.startMusic();
 
     score = 10000;
     showingHelpOverlay = false;
@@ -351,8 +368,75 @@ class MissionScene extends Scene {
       n.update(worldMouseX, worldMouseY);
     }
 
-    for (Particle p : particles) {
+    // --- GHOST THREAT AND ACTIONS ---
+    if (!missionComplete && !missionFailed && !showingHelpOverlay && !dialogueSystem.isDialogueActive()) {
+      // 1. Determine threat increase per frame
+      float threatIncreasePerFrame = 100.0f / (90.0f * 60.0f); // Default 90s
+      if (missionID == 2) threatIncreasePerFrame = 100.0f / (100.0f * 60.0f);
+      else if (missionID == 3) threatIncreasePerFrame = 100.0f / (120.0f * 60.0f);
+      else if (missionID == 4) threatIncreasePerFrame = 100.0f / (80.0f * 60.0f);
+      else if (missionID == 5) {
+        if (missionStage == 1) threatIncreasePerFrame = 100.0f / (90.0f * 60.0f);
+        else if (missionStage == 2) threatIncreasePerFrame = 100.0f / (100.0f * 60.0f);
+        else if (missionStage == 3) threatIncreasePerFrame = 100.0f / (120.0f * 60.0f);
+        else if (missionStage == 4) threatIncreasePerFrame = 100.0f / (80.0f * 60.0f);
+      }
+      
+      threatLevel = min(100.0f, threatLevel + threatIncreasePerFrame);
+      soundManager.setThreatLevel(threatLevel);
+
+      if (threatLevel >= 100.0f) {
+        missionFailed = true;
+        dialogueSystem.eva("¡CRÍTICO! El nivel de amenaza de GHOST llegó al 100%. Fallo inmediato.");
+      }
+
+      // 2. Determine GHOST action interval
+      if (missionID == 5) {
+        if (missionStage == 1) ghostActionInterval = 8 * 60;
+        else if (missionStage == 2) ghostActionInterval = 10 * 60;
+        else if (missionStage == 3) ghostActionInterval = 12 * 60;
+        else if (missionStage == 4) ghostActionInterval = 8 * 60;
+      }
+      
+      // 3. Tick action timer
+      ghostActionTimer++;
+      if (ghostActionTimer >= ghostActionInterval) {
+        ghostActionTimer = 0;
+        ghostAct();
+      }
+    }
+
+    // Dijkstra threshold check
+    if ((missionID == 2 || (missionID == 5 && missionStage == 2)) && dijkstraPath != null && !missionFailed) {
+      float pathWeight = 0;
+      if (dijkstraPath.size() > 0) {
+        pathWeight = dijkstraPath.get(dijkstraPath.size() - 1).dijkstraDist;
+      }
+      if (pathWeight > 25) {
+        missionFailed = true;
+        dialogueSystem.eva("¡Riesgo de ruta excedido! El peso final (" + (int)pathWeight + ") superó el umbral de 25.");
+      }
+    }
+
+    // Kruskal threshold check
+    if ((missionID == 3 || (missionID == 5 && missionStage == 3)) && mstCost > 130 && !missionFailed) {
+      missionFailed = true;
+      dialogueSystem.eva("¡Presupuesto superado! El costo del MST (" + (int)mstCost + ") excedió el límite de 130.");
+    }
+
+    // Ford-Fulkerson threshold check
+    if ((missionID == 4 || (missionID == 5 && missionStage == 4)) && calculatedMaxFlow > 20 && !missionFailed) {
+      missionFailed = true;
+      dialogueSystem.eva("¡Límite de exfiltración superado! El flujo exfiltrado (" + (int)calculatedMaxFlow + ") superó el umbral de 20.");
+    }
+
+    // Update and prune custom particles
+    for (int i = particles.size() - 1; i >= 0; i--) {
+      Particle p = particles.get(i);
       p.update();
+      if (!p.isBackground && p.alpha <= 0) {
+        particles.remove(i);
+      }
     }
 
     for (int i = signals.size() - 1; i >= 0; i--) {
@@ -589,11 +673,15 @@ class MissionScene extends Scene {
     // --- Announcement of results ---
     if (missionFailed && !failureAnnounced) {
       failureAnnounced = true;
+      soundManager.stopMusic();
+      soundManager.playDefeat();
       narrative.missionFailed();
     }
 
     if (missionComplete && !successAnnounced) {
       successAnnounced = true;
+      soundManager.stopMusic();
+      soundManager.playVictory();
       score += 2000; // completion bonus!
       narrative.missionSuccess();
       // Unlock subsequent mission in Game progress
@@ -601,6 +689,113 @@ class MissionScene extends Scene {
         game.unlockedMissions[missionID] = true;
       }
     }
+  }
+
+  void exit() {
+    soundManager.stopMusic();
+  }
+
+  void loseShield() {
+    shields = max(0, shields - 1);
+    soundManager.playShieldLost();
+    threatLevel = min(100.0f, threatLevel + 15.0f);
+    soundManager.setThreatLevel(threatLevel);
+    triggerAlert("¡ESCUDO DAÑADO!");
+    if (shields <= 0) {
+      missionFailed = true;
+      dialogueSystem.eva("¡FALLO! Todos los escudos han sido destruidos por GHOST.");
+    }
+  }
+
+  void ghostAct() {
+    int mid = missionID;
+    int stage = (mid == 5) ? missionStage : 0;
+    
+    soundManager.playGhostAttack();
+    
+    if (mid == 1 || stage == 1) {
+      // M1: Corrompe un nodo vecino de Ana (que no sea Ana ni GHOST).
+      Node ana = getNode("Ana");
+      Node ghost = getNode("GHOST");
+      if (ana != null && ghost != null) {
+        ArrayList<Node> candidates = new ArrayList<Node>();
+        for (Node n : ana.neighbors) {
+          if (n != ana && n != ghost && !n.corrupted) {
+            candidates.add(n);
+          }
+        }
+        if (candidates.size() > 0) {
+          Node toCorrupt = candidates.get((int)random(candidates.size()));
+          toCorrupt.corrupted = true;
+          
+          // Verify if there is still a path to GHOST
+          boolean pathExists = checkPathExists(ana, ghost);
+          if (!pathExists) {
+            loseShield();
+            dialogueSystem.eva("¡GHOST corrompió " + toCorrupt.name + "! Camino cortado hacia GHOST. ¡Escudo dañado!");
+            toCorrupt.corrupted = false; // Restore to avoid lock
+          } else {
+            dialogueSystem.eva("¡GHOST corrompió el nodo vecino " + toCorrupt.name + "! Queda bloqueado.");
+          }
+        }
+      }
+    }
+    else if (mid == 2 || stage == 2) {
+      // M2: Cada 10s sube el peso de una arista aleatoria en +3.
+      if (edges.size() > 0) {
+        Edge targetEdge = edges.get((int)random(edges.size()));
+        targetEdge.weight += 3;
+        targetEdge.bounceTimer = 1.0f;
+        dialogueSystem.eva("¡GHOST hackeó un enlace! Peso de " + targetEdge.a.name + "-" + targetEdge.b.name + " aumentado a " + (int)targetEdge.weight + ".");
+      }
+    }
+    else if (mid == 3 || stage == 3) {
+      // M3: Cada 12s destruye una arista del grafo (desaparece).
+      ArrayList<Edge> activeEdges = new ArrayList<Edge>();
+      for (Edge e : edges) {
+        if (!e.partOfMST) {
+          activeEdges.add(e);
+        }
+      }
+      if (activeEdges.size() > 0) {
+        Edge toDestroy = activeEdges.get((int)random(activeEdges.size()));
+        float midX = (toDestroy.a.x + toDestroy.b.x) / 2;
+        float midY = (toDestroy.a.y + toDestroy.b.y) / 2;
+        for (int i = 0; i < 20; i++) {
+          particles.add(new Particle(midX, midY, color(255, 120, 0)));
+        }
+        edges.remove(toDestroy);
+        kruskalMST.sortedEdges.remove(toDestroy);
+        dialogueSystem.eva("¡ALERTA! GHOST destruyó el enlace " + toDestroy.a.name + " - " + toDestroy.b.name + ".");
+      }
+    }
+    else if (mid == 4 || stage == 4) {
+      // M4: Cada 8s agrega +1 capacidad a una arista.
+      if (edges.size() > 0) {
+        Edge targetEdge = edges.get((int)random(edges.size()));
+        targetEdge.capacity += 1;
+        targetEdge.bounceTimer = 1.0f;
+        dialogueSystem.eva("¡GHOST aumentó capacidad de enlace " + targetEdge.a.name + "-" + targetEdge.b.name + " (+1 exfiltración)!");
+      }
+    }
+  }
+
+  boolean checkPathExists(Node start, Node end) {
+    ArrayList<Node> visited = new ArrayList<Node>();
+    ArrayList<Node> queue = new ArrayList<Node>();
+    queue.add(start);
+    visited.add(start);
+    while (queue.size() > 0) {
+      Node curr = queue.remove(0);
+      if (curr == end) return true;
+      for (Node n : curr.neighbors) {
+        if (!visited.contains(n) && !n.corrupted) {
+          visited.add(n);
+          queue.add(n);
+        }
+      }
+    }
+    return false;
   }
 
   // =========================

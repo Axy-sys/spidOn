@@ -49,8 +49,8 @@ class MissionController {
               soundManager.playSelect();
             } else {
               mission.score = max(0, mission.score - 100);
-              soundManager.playError();
-              mission.dialogueSystem.eva("Debes iniciar la investigaci\u00f3n desde ANA, la Directora IT afectada (-100 pts).");
+              mission.loseShield();
+              mission.dialogueSystem.eva("Debes iniciar la investigación desde ANA, la Directora IT afectada (-100 pts).");
             }
           } else {
             Node expectedNode = null;
@@ -90,7 +90,7 @@ class MissionController {
                 }
               } else {
                 mission.score = max(0, mission.score - 150);
-                soundManager.playError();
+                mission.loseShield();
                 mission.dialogueSystem.eva("\u00a1Error de orden! " + clickedNode.name + " no es el siguiente en la estructura de " + mission.traversalName + " (-150 pts).");
               }
             } else {
@@ -148,7 +148,7 @@ class MissionController {
             }
           } else {
             mission.score = max(0, mission.score - 200);
-            soundManager.playError();
+            mission.loseShield();
             mission.dialogueSystem.eva(clickedNode.name + " no es un aliado de apoyo disponible (-200 pts). Haz clic en Bruno, Valeria o Sara.");
           }
           return;
@@ -233,7 +233,8 @@ class MissionController {
               soundManager.playSuccess();
             } else {
               mission.dialogueSystem.eva("Este enlace no está saturado. Para bloquear el flujo de ataque, debes cortar los enlaces del 'Corte Mínimo' (saturados).");
-              soundManager.playError();
+              e.bounceTimer = 1.0f;
+              mission.loseShield();
             }
             return;
           }

@@ -11,6 +11,7 @@ class Edge {
 
   boolean blocked = false;
   boolean highlighted = false;
+  float bounceTimer = 0;
 
   Edge(Node a, Node b) {
     this.a = a;
@@ -18,6 +19,17 @@ class Edge {
   }
 
   void render() {
+    if (bounceTimer > 0) {
+      bounceTimer -= 0.04;
+    }
+    float shakeX = 0;
+    float shakeY = 0;
+    if (bounceTimer > 0) {
+      float amt = bounceTimer * 12;
+      shakeX = sin(frameCount * 1.5) * amt;
+      shakeY = cos(frameCount * 1.5) * amt;
+    }
+
     if (game != null && game.sceneManager.currentScene != null && game.sceneManager.currentScene instanceof MissionScene) {
       MissionScene ms = (MissionScene) game.sceneManager.currentScene;
       if (ms.missionID == 1 || (ms.missionID == 5 && ms.missionStage == 1)) {
@@ -127,6 +139,14 @@ class Edge {
         stroke(0, 180, 255, 120);
         strokeWeight(3);
       }
+    }
+
+    if (bounceTimer > 0) {
+      pushStyle();
+      stroke(255, 0, 80, bounceTimer * 240);
+      strokeWeight(8 * bounceTimer + 2);
+      line(a.x + shakeX, a.y + shakeY, b.x + shakeX, b.y + shakeY);
+      popStyle();
     }
 
     line(a.x, a.y, b.x, b.y);

@@ -14,6 +14,7 @@ class Node {
   boolean supportive = false;
   boolean vulnerable = false;
   boolean shielded = false;
+  boolean corrupted = false;
 
   boolean hovered = false;
   boolean selected = false;
@@ -82,18 +83,25 @@ class Node {
   }
 
   void render() {
+    float r = radius;
 
     pushMatrix();
     translate(x + shakeX, y + shakeY);
 
-    float r = 26 + sin(frameCount * 0.08 + pulseOffset) * 2;
+    // Add node-specific shake for reactions
+    if (reactionTimer < PI) {
+      float shakeAmt = sin(reactionTimer) * 12;
+      translate(random(-shakeAmt, shakeAmt), random(-shakeAmt, shakeAmt));
+    }
 
     boolean isHidden = false;
     boolean revealRoleColors = true;
 
+    // Check fog of war
     if (game != null && game.sceneManager.currentScene != null && game.sceneManager.currentScene instanceof MissionScene) {
       MissionScene ms = (MissionScene) game.sceneManager.currentScene;
       if (ms.missionID == 1 || (ms.missionID == 5 && ms.missionStage == 1)) {
+        // Fog of war rules: show if visited, or if in Queue/Stack
         boolean inQueueOrStack = false;
         if (ms.traversalName.equals("BFS")) {
           inQueueOrStack = ms.bfsTraversal.queue.contains(this);
@@ -110,6 +118,9 @@ class Node {
         } else if (inQueueOrStack) {
           isHidden = false;
           revealRoleColors = false; // Discovered but neutral style
+        } else if (corrupted) {
+          isHidden = false;
+          revealRoleColors = false;
         } else {
           isHidden = true;
           revealRoleColors = false;
@@ -165,6 +176,10 @@ class Node {
     if (isHidden) {
       fill(80, 80, 80, 15);
       ellipse(0, 0, 78, 78);
+    } else if (corrupted) {
+      float glowPulse = sin(frameCount * 0.1) * 0.5 + 0.5;
+      fill(255, 120, 0, 40 + 35 * glowPulse); // Pulsing orange glow
+      ellipse(0, 0, 88 + 10 * glowPulse, 88 + 10 * glowPulse);
     } else if (colorblindMode) {
       if (revealRoleColors && infected) {
         fill(230, 97, 1, 45); // high-contrast orange
@@ -201,6 +216,11 @@ class Node {
     if (isHidden) {
       stroke(100, 100, 100);
       fill(20, 20, 25);
+    } else if (corrupted) {
+      float pulse = sin(frameCount * 0.1) * 0.5 + 0.5;
+      stroke(255, 120, 0); // Pulse border
+      strokeWeight(3 + 2 * pulse);
+      fill(60, 25, 0); // dark orange fill
     } else if (colorblindMode) {
       if (revealRoleColors && infected) {
         stroke(230, 97, 1);
@@ -236,7 +256,9 @@ class Node {
     // Inner highlight disc
     if (!isHidden) {
       noStroke();
-      if (colorblindMode) {
+      if (corrupted) {
+        fill(255, 120, 0); // Orange
+      } else if (colorblindMode) {
         fill((revealRoleColors && infected) ? color(230, 97, 1) : color(247, 247, 247));
       } else {
         fill((revealRoleColors && infected) ? color(255, 60, 120) : color(0, 255, 255));

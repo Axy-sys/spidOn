@@ -163,14 +163,19 @@ class KruskalMST {
       MissionScene ms = (MissionScene) game.sceneManager.currentScene;
       if (correct) {
         ms.score += 500;
-        soundManager.playSuccess();
+        soundManager.playCorrectDecision();
         ms.dialogueSystem.eva("¡Excelente elección! " + (accept ? "Esa arista conecta sin hacer ciclos." : "Evitamos un ciclo en la red."));
         ms.triggerAlert("+500 PUNTOS");
       } else {
         ms.score = max(0, ms.score - 300);
-        soundManager.playError();
+        ms.loseShield();
         ms.dialogueSystem.eva("Oh... " + (accept ? "Esa conexión creaba un bucle redundante en el árbol." : "Teníamos que aceptar esa conexión para asegurar la cobertura."));
-        ms.triggerAlert("-300 PENALIZACIÓN");
+      }
+    } else {
+      if (correct) {
+        soundManager.playSuccess();
+      } else {
+        soundManager.playError();
       }
     }
 

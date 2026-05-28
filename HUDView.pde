@@ -74,6 +74,9 @@ class HUDView {
     // 1. Mission Header & Score
     cy = drawMissionHeader(px + PAD, cy, cardW);
 
+    // 1b. Threat & Shields
+    cy = drawThreatAndShields(px + PAD, cy, cardW);
+
     // 2. Algorithm Tracing (Visual Queue / Stack / Distance Table / Cost List)
     cy = drawAlgorithmVisualizer(px + PAD, cy, cardW);
 
@@ -211,6 +214,106 @@ class HUDView {
     if (mid == 3) return "Analizar red → Reconstruir";
     if (mid == 4) return "Analizar flujo → Aplicar control";
     return "";
+  }
+
+  // ─────────────────────────────────────────────
+  // 1b. THREAT & SHIELDS CARD
+  // ─────────────────────────────────────────────
+
+  float drawThreatAndShields(float x, float y, float w) {
+    int mid = mission.missionID;
+    int stage = (mid == 5) ? mission.missionStage : 0;
+    
+    String limitText = "";
+    if (mid == 2 || stage == 2) {
+      limitText = "Límite de riesgo de ruta: 25";
+    } else if (mid == 3 || stage == 3) {
+      limitText = "Presupuesto MST máximo: 130";
+    } else if (mid == 4 || stage == 4) {
+      limitText = "Límite de exfiltración: 20";
+    }
+
+    float cardH = (largeTextMode ? 100 : 88) + (limitText.length() > 0 ? (largeTextMode ? 22 : 18) : 0);
+    float iy = beginCard(x, y, w, cardH);
+    float ix = x + CARD_PAD;
+    float contentW = w - CARD_PAD * 2;
+
+    // Title
+    textAlign(LEFT, TOP);
+    textSize(largeTextMode ? 12 : 10);
+    fill(COL_DIM);
+    text("AMENAZA DE GHOST & ESCUDOS", ix, iy);
+
+    // Threat Meter
+    int remainingFrames = max(0, mission.ghostActionInterval - mission.ghostActionTimer);
+    float remainingSeconds = (float)remainingFrames / 60.0f;
+    
+    float barY = iy + (largeTextMode ? 22 : 18);
+    float barW = contentW;
+    float barH = 10;
+    
+    textAlign(LEFT, TOP);
+    textSize(largeTextMode ? 12 : 10);
+    fill(COL_WHITE);
+    text("Amenaza GHOST: " + nf(mission.threatLevel, 0, 1) + "%", ix, barY);
+    
+    textAlign(RIGHT, TOP);
+    fill(COL_RED);
+    text("Acción en: " + nf(remainingSeconds, 0, 1) + "s", ix + barW, barY);
+    
+    float fillW = map(mission.threatLevel, 0, 100, 0, barW);
+    float barDrawY = barY + 15;
+    
+    noStroke();
+    fill(COL_BAR_TRACK);
+    rect(ix, barDrawY, barW, barH, 5);
+    
+    float pulse = sin(frameCount * 0.15) * 0.5 + 0.5;
+    color threatColor = COL_RED;
+    if (mission.threatLevel > 70) {
+      threatColor = color(255, 60 - 40 * pulse, 90 - 40 * pulse);
+    }
+    fill(threatColor);
+    rect(ix, barDrawY, fillW, barH, 5);
+    
+    // Shields
+    float shieldsY = barDrawY + barH + 10;
+    textAlign(LEFT, TOP);
+    textSize(largeTextMode ? 12 : 10);
+    fill(COL_WHITE);
+    text("SISTEMA DE ESCUDOS:", ix, shieldsY);
+    
+    float blockX = ix + (largeTextMode ? 150 : 130);
+    float blockW = largeTextMode ? 26 : 20;
+    float blockH = largeTextMode ? 20 : 16;
+    for (int i = 0; i < 3; i++) {
+      if (i < mission.shields) {
+        fill(COL_GREEN); // Active
+        stroke(COL_WHITE, 180);
+      } else {
+        fill(50); // Inactive
+        stroke(100);
+      }
+      strokeWeight(1);
+      rect(blockX, shieldsY - 2, blockW, blockH, 3);
+      
+      fill(i < mission.shields ? 0 : 120);
+      textAlign(CENTER, CENTER);
+      textSize(largeTextMode ? 11 : 9);
+      text("S", blockX + blockW / 2, shieldsY - 2 + blockH / 2);
+      
+      blockX += blockW + 6;
+    }
+
+    if (limitText.length() > 0) {
+      float limitY = shieldsY + (largeTextMode ? 22 : 18);
+      textAlign(LEFT, TOP);
+      textSize(largeTextMode ? 12 : 10);
+      fill(COL_GOLD);
+      text(limitText, ix, limitY);
+    }
+    
+    return y + cardH + CARD_GAP;
   }
 
   // ─────────────────────────────────────────────
